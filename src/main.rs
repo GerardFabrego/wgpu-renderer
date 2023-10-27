@@ -21,6 +21,8 @@ async fn wgpu_init(
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::PRIMARY,
         dx12_shader_compiler: Default::default(),
+        flags: Default::default(),
+        gles_minor_version: Default::default(),
     });
 
     let surface = unsafe { instance.create_surface(window) }.unwrap();
@@ -80,9 +82,10 @@ fn main() {
         .expect("There was an error when building the window");
 
     // WGPU context creation
-    let (surface, config, device, queue) = pollster::block_on(wgpu_init(&window));
+    let (surface, mut config, device, queue) = pollster::block_on(wgpu_init(&window));
 
-    let positions: [f32; 6] = [-0.5, -0.5, 0.5, -0.5, 0.0, 0.5];
+    let positions: [f32; 8] = [-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
+    let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
 
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
         array_stride: 2 * size_of::<f32>() as u64,
@@ -96,12 +99,21 @@ fn main() {
 
     let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Vertex buffer"),
-        size: (size_of::<f32>() * 6) as u64,
+        size: (size_of::<f32>() * 8) as u64,
         usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
     queue.write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&positions));
+
+    let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("Index buffer"),
+        size: (size_of::<u32>() * 6) as u64,
+        usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+
+    queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Render pipeline layout"),
@@ -162,7 +174,11 @@ fn main() {
                         },
                     ..
                 } => elwt.exit(),
-                WindowEvent::Resized(_) => {}
+                WindowEvent::Resized(new_size) => {
+                    config.height = new_size.height;
+                    config.width = new_size.width;
+                    surface.configure(&device, &config);
+                }
                 WindowEvent::RedrawRequested => {
                     let current_texture = surface.get_current_texture().unwrap();
                     let view = current_texture
@@ -186,15 +202,18 @@ fn main() {
                                     b: 0.5,
                                     a: 1.0,
                                 }),
-                                store: true,
+                                store: wgpu::StoreOp::Store,
                             },
                         })],
                         depth_stencil_attachment: None,
+                        timestamp_writes: None,
+                        occlusion_query_set: None,
                     });
 
                     render_pass.set_pipeline(&render_pipeline);
                     render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                    render_pass.draw(0..3, 0..1);
+                    render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                    render_pass.draw_indexed(0..6, 0, 0..2);
 
                     drop(render_pass);
 
