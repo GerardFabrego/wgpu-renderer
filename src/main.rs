@@ -1,6 +1,10 @@
+mod vertex;
+
 use std::mem::size_of;
 
 use log::info;
+use vertex::Vertex;
+use wgpu::{BindGroupEntry, BindGroupLayout};
 use winit::{
     event::{Event, KeyEvent, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -84,22 +88,36 @@ fn main() {
     // WGPU context creation
     let (surface, mut config, device, queue) = pollster::block_on(wgpu_init(&window));
 
-    let positions: [f32; 8] = [-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
+    #[rustfmt::skip]
+    let positions: [Vertex; 4] = [
+        Vertex {position: [-0.5, -0.5], color: [1.0, 0.0, 0.0] },
+        Vertex {position: [ 0.5, -0.5], color: [0.0, 1.0, 0.0] },
+        Vertex {position: [ 0.5,  0.5], color: [0.0, 0.0, 1.0] },
+        Vertex {position: [-0.5,  0.5], color: [0.0, 1.0, 0.0] },
+    ];
+
     let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
 
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
-        array_stride: 2 * size_of::<f32>() as u64,
+        array_stride: size_of::<Vertex>() as u64,
         step_mode: wgpu::VertexStepMode::Vertex,
-        attributes: &[wgpu::VertexAttribute {
-            format: wgpu::VertexFormat::Float32x2,
-            offset: 0,
-            shader_location: 0,
-        }],
+        attributes: &[
+            wgpu::VertexAttribute {
+                format: wgpu::VertexFormat::Float32x2,
+                offset: 0,
+                shader_location: 0,
+            },
+            wgpu::VertexAttribute {
+                format: wgpu::VertexFormat::Float32x3,
+                offset: 2 * size_of::<f32>() as u64,
+                shader_location: 1,
+            },
+        ],
     };
 
     let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Vertex buffer"),
-        size: (size_of::<f32>() * 8) as u64,
+        size: (size_of::<Vertex>() * positions.len()) as u64,
         usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
@@ -115,15 +133,50 @@ fn main() {
 
     queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
 
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-        label: Some("Render pipeline layout"),
-        bind_group_layouts: &[],
-        push_constant_ranges: &[],
+    let color: [f32; 3] = [1.0, 1.0, 1.0];
+
+    let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("Uniform buffer"),
+        size: (size_of::<f32>() * 3) as u64,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    });
+
+    queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&color));
+
+    let uniform_bind_group_layout =
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Uniform buffer bind group layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        });
+
+    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("Uniform buffer bind group"),
+        layout: &uniform_bind_group_layout,
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: uniform_buffer.as_entire_binding(),
+        }],
     });
 
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Shader"),
         source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+    });
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render pipeline layout"),
+        bind_group_layouts: &[&uniform_bind_group_layout],
+        push_constant_ranges: &[],
     });
 
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -163,68 +216,72 @@ fn main() {
 
     // Event loop
     event_loop
-        .run(move |event, elwt| match event {
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::CloseRequested
-                | WindowEvent::KeyboardInput {
-                    event:
-                        KeyEvent {
-                            physical_key: PhysicalKey::Code(KeyCode::Escape),
-                            ..
-                        },
-                    ..
-                } => elwt.exit(),
-                WindowEvent::Resized(new_size) => {
-                    config.height = new_size.height;
-                    config.width = new_size.width;
-                    surface.configure(&device, &config);
-                }
-                WindowEvent::RedrawRequested => {
-                    let current_texture = surface.get_current_texture().unwrap();
-                    let view = current_texture
-                        .texture
-                        .create_view(&wgpu::TextureViewDescriptor::default());
-
-                    let mut encoder =
-                        device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                            label: Some("Render encoder"),
-                        });
-
-                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                        label: Some("Render pass"),
-                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                            view: &view,
-                            resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color {
-                                    r: 0.2,
-                                    g: 0.8,
-                                    b: 0.5,
-                                    a: 1.0,
-                                }),
-                                store: wgpu::StoreOp::Store,
+        .run(move |event, elwt| {
+            if let Event::WindowEvent { event, .. } = event {
+                match event {
+                    WindowEvent::CloseRequested
+                    | WindowEvent::KeyboardInput {
+                        event:
+                            KeyEvent {
+                                physical_key: PhysicalKey::Code(KeyCode::Escape),
+                                ..
                             },
-                        })],
-                        depth_stencil_attachment: None,
-                        timestamp_writes: None,
-                        occlusion_query_set: None,
-                    });
+                        ..
+                    } => elwt.exit(),
+                    WindowEvent::Resized(new_size) => {
+                        config.height = new_size.height;
+                        config.width = new_size.width;
+                        surface.configure(&device, &config);
+                    }
+                    WindowEvent::RedrawRequested => {
+                        let current_texture = surface.get_current_texture().unwrap();
+                        let view = current_texture
+                            .texture
+                            .create_view(&wgpu::TextureViewDescriptor::default());
 
-                    render_pass.set_pipeline(&render_pipeline);
-                    render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-                    render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-                    render_pass.draw_indexed(0..6, 0, 0..2);
+                        let mut encoder =
+                            device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                                label: Some("Render encoder"),
+                            });
 
-                    drop(render_pass);
+                        let mut render_pass =
+                            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                                label: Some("Render pass"),
+                                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                                    view: &view,
+                                    resolve_target: None,
+                                    ops: wgpu::Operations {
+                                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                                            r: 0.2,
+                                            g: 0.8,
+                                            b: 0.5,
+                                            a: 1.0,
+                                        }),
+                                        store: wgpu::StoreOp::Store,
+                                    },
+                                })],
+                                depth_stencil_attachment: None,
+                                timestamp_writes: None,
+                                occlusion_query_set: None,
+                            });
 
-                    let command_buffer = encoder.finish();
+                        render_pass.set_pipeline(&render_pipeline);
+                        render_pass.set_bind_group(0, &uniform_bind_group, &[]);
+                        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                        render_pass
+                            .set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                        render_pass.draw_indexed(0..6, 0, 0..2);
 
-                    queue.submit(std::iter::once(command_buffer));
-                    current_texture.present();
-                }
-                _ => {}
-            },
-            _ => {}
+                        drop(render_pass);
+
+                        let command_buffer = encoder.finish();
+
+                        queue.submit(std::iter::once(command_buffer));
+                        current_texture.present();
+                    }
+                    _ => {}
+                };
+            }
         })
         .unwrap_or_else(|error| {
             info!("Problem on the window event loop: {:?}", error);
