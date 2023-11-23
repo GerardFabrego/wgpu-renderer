@@ -74,7 +74,7 @@ async fn wgpu_init(
 
     surface.configure(&device, &config);
 
-    return (surface, config, device, queue);
+    (surface, config, device, queue)
 }
 
 fn main() {
