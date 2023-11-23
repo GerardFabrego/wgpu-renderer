@@ -1,10 +1,11 @@
+mod camera;
 mod vertex;
 
 use std::mem::size_of;
 
+use camera::Camera;
 use log::info;
 use vertex::Vertex;
-use wgpu::{BindGroupEntry, BindGroupLayout};
 use winit::{
     event::{Event, KeyEvent, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -89,11 +90,11 @@ fn main() {
     let (surface, mut config, device, queue) = pollster::block_on(wgpu_init(&window));
 
     #[rustfmt::skip]
-    let positions: [Vertex; 4] = [
-        Vertex {position: [-0.5, -0.5], color: [1.0, 0.0, 0.0] },
-        Vertex {position: [ 0.5, -0.5], color: [0.0, 1.0, 0.0] },
-        Vertex {position: [ 0.5,  0.5], color: [0.0, 0.0, 1.0] },
-        Vertex {position: [-0.5,  0.5], color: [0.0, 1.0, 0.0] },
+    let vertices: [Vertex; 4] = [
+        Vertex {position: [-0.5, -0.5, 0.0], color: [1.0, 0.0, 0.0] },
+        Vertex {position: [ 0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
+        Vertex {position: [ 0.5,  0.5, 0.0], color: [0.0, 0.0, 1.0] },
+        Vertex {position: [-0.5,  0.5, 0.0], color: [0.0, 1.0, 0.0] },
     ];
 
     let indices: [u32; 6] = [0, 1, 2, 2, 3, 0];
@@ -103,13 +104,13 @@ fn main() {
         step_mode: wgpu::VertexStepMode::Vertex,
         attributes: &[
             wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x2,
+                format: wgpu::VertexFormat::Float32x3,
                 offset: 0,
                 shader_location: 0,
             },
             wgpu::VertexAttribute {
                 format: wgpu::VertexFormat::Float32x3,
-                offset: 2 * size_of::<f32>() as u64,
+                offset: 3 * size_of::<f32>() as u64,
                 shader_location: 1,
             },
         ],
@@ -117,12 +118,12 @@ fn main() {
 
     let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Vertex buffer"),
-        size: (size_of::<Vertex>() * positions.len()) as u64,
+        size: (size_of::<Vertex>() * vertices.len()) as u64,
         usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
-    queue.write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&positions));
+    queue.write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
 
     let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("Index buffer"),
@@ -133,23 +134,38 @@ fn main() {
 
     queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
 
-    let color: [f32; 3] = [1.0, 1.0, 1.0];
+    let camera = Camera::new(
+        (0.0, 0.0, 1.0).into(),
+        (0.0, 0.0, 0.0).into(),
+        config.width as f32 / config.height as f32,
+        45.0,
+        0.1,
+        100.0,
+    );
 
-    let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        label: Some("Uniform buffer"),
-        size: (size_of::<f32>() * 3) as u64,
+    let camera_uniform_data: [[f32; 4]; 4] = camera.get_view_projection_matrix().into();
+
+    println!("HERE: {:?}", camera_uniform_data);
+
+    let camera_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        label: Some("Camera uniform buffer"),
+        size: size_of::<f32>() as u64 * 16,
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
-    queue.write_buffer(&uniform_buffer, 0, bytemuck::cast_slice(&color));
+    queue.write_buffer(
+        &camera_uniform_buffer,
+        0,
+        bytemuck::cast_slice(&camera_uniform_data),
+    );
 
-    let uniform_bind_group_layout =
+    let camera_uniform_bind_group_layout =
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("Uniform buffer bind group layout"),
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
+                visibility: wgpu::ShaderStages::VERTEX,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -159,12 +175,12 @@ fn main() {
             }],
         });
 
-    let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let camera_uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("Uniform buffer bind group"),
-        layout: &uniform_bind_group_layout,
+        layout: &camera_uniform_bind_group_layout,
         entries: &[wgpu::BindGroupEntry {
             binding: 0,
-            resource: uniform_buffer.as_entire_binding(),
+            resource: camera_uniform_buffer.as_entire_binding(),
         }],
     });
 
@@ -175,7 +191,7 @@ fn main() {
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("Render pipeline layout"),
-        bind_group_layouts: &[&uniform_bind_group_layout],
+        bind_group_layouts: &[&camera_uniform_bind_group_layout],
         push_constant_ranges: &[],
     });
 
@@ -266,7 +282,7 @@ fn main() {
                             });
 
                         render_pass.set_pipeline(&render_pipeline);
-                        render_pass.set_bind_group(0, &uniform_bind_group, &[]);
+                        render_pass.set_bind_group(0, &camera_uniform_bind_group, &[]);
                         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
                         render_pass
                             .set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
