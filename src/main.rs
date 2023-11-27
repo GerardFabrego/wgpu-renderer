@@ -13,14 +13,23 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-async fn wgpu_init(
-    window: &Window,
-) -> (
-    wgpu::Surface,
-    wgpu::SurfaceConfiguration,
-    wgpu::Device,
-    wgpu::Queue,
-) {
+struct Setup {
+    event_loop: EventLoop<()>,
+    _window: Window,
+    surface: wgpu::Surface,
+    config: wgpu::SurfaceConfiguration,
+    device: wgpu::Device,
+    queue: wgpu::Queue,
+}
+
+async fn wgpu_init() -> Setup {
+    let event_loop = EventLoop::new().unwrap();
+    event_loop.set_control_flow(ControlFlow::Poll);
+
+    let window: Window = WindowBuilder::new()
+        .build(&event_loop)
+        .expect("There was an error when building the window");
+
     let size = window.inner_size();
 
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -30,7 +39,7 @@ async fn wgpu_init(
         gles_minor_version: Default::default(),
     });
 
-    let surface = unsafe { instance.create_surface(window) }.unwrap();
+    let surface = unsafe { instance.create_surface(&window) }.unwrap();
 
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -74,23 +83,19 @@ async fn wgpu_init(
 
     surface.configure(&device, &config);
 
-    (surface, config, device, queue)
+    Setup {
+        event_loop,
+        _window: window,
+        surface,
+        config,
+        device,
+        queue,
+    }
 }
 
-fn main() {
-    // Window creation
-    let event_loop = EventLoop::new().unwrap();
-    event_loop.set_control_flow(ControlFlow::Poll);
-
-    let window: Window = WindowBuilder::new()
-        .build(&event_loop)
-        .expect("There was an error when building the window");
-
-    // WGPU context creation
-    let (surface, mut config, device, queue) = pollster::block_on(wgpu_init(&window));
-
+fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
-    let vertices: [Vertex; 24] = [
+    let vertices = [
 
         Vertex {position: [-1.0, -1.0,  1.0], color: [1.0, 0.0, 0.0] },
         Vertex {position: [ 1.0, -1.0,  1.0], color: [1.0, 0.0, 0.0] },
@@ -123,7 +128,7 @@ fn main() {
         Vertex {position: [ 1.0, -1.0, -1.0], color: [0.0, 1.0, 1.0] },
     ];
 
-    let indices: [u32; 36] = [
+    let indices = [
         0, 1, 2, 2, 3, 0, // top
         4, 5, 6, 6, 7, 4, // bottom
         8, 9, 10, 10, 11, 8, // right
@@ -131,6 +136,21 @@ fn main() {
         16, 17, 18, 18, 19, 16, // front
         20, 21, 22, 22, 23, 20, // back
     ];
+
+    (vertices, indices)
+}
+
+fn run(
+    Setup {
+        surface,
+        mut config,
+        device,
+        queue,
+        event_loop,
+        ..
+    }: Setup,
+) {
+    let (vertices, indices) = create_cube_data();
 
     let vertex_buffer_layout = wgpu::VertexBufferLayout {
         array_stride: size_of::<Vertex>() as u64,
@@ -333,4 +353,9 @@ fn main() {
         .unwrap_or_else(|error| {
             info!("Problem on the window event loop: {:?}", error);
         });
+}
+
+fn main() {
+    let setup = pollster::block_on(wgpu_init());
+    run(setup);
 }
