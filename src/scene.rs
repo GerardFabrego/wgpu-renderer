@@ -1,7 +1,5 @@
 use std::mem::size_of;
 
-use winit::dpi::PhysicalSize;
-
 use crate::{camera::Camera, vertex::Vertex};
 
 pub struct Scene {
@@ -9,6 +7,7 @@ pub struct Scene {
     index_buffer: wgpu::Buffer,
     index_count: usize,
     camera_uniform_bind_group: wgpu::BindGroup,
+    camera_uniform_buffer: wgpu::Buffer,
     render_pipeline: wgpu::RenderPipeline,
 }
 
@@ -201,6 +200,7 @@ impl Scene {
             index_buffer,
             index_count: indices.len(),
             camera_uniform_bind_group,
+            camera_uniform_buffer,
             render_pipeline,
         }
     }

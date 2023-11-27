@@ -108,15 +108,16 @@ fn run(
         .run(move |event, elwt| {
             if let Event::WindowEvent { event, .. } = event {
                 match event {
-                    WindowEvent::CloseRequested
-                    | WindowEvent::KeyboardInput {
-                        event:
-                            KeyEvent {
-                                physical_key: PhysicalKey::Code(KeyCode::Escape),
-                                ..
-                            },
-                        ..
-                    } => elwt.exit(),
+                    WindowEvent::CloseRequested => elwt.exit(),
+                    WindowEvent::KeyboardInput { event, .. } => {
+                        if let PhysicalKey::Code(code) = event.physical_key {
+                            match code {
+                                KeyCode::Escape => elwt.exit(),
+                                KeyCode::KeyA => {}
+                                _ => (),
+                            }
+                        }
+                    }
                     WindowEvent::Resized(new_size) => {
                         config.height = new_size.height;
                         config.width = new_size.width;
