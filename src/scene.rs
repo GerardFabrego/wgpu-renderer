@@ -203,7 +203,6 @@ impl Scene {
     }
 
     pub fn render(&self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
-        println!("Camera position: {:?}", self.camera.position);
         let camera_uniform_data: [[f32; 4]; 4] = self.camera.get_view_projection_matrix().into();
 
         queue.write_buffer(
