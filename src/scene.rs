@@ -1,11 +1,15 @@
 use std::mem::size_of;
 
+use cgmath::{Point3, Vector3};
+use winit::keyboard::KeyCode;
+
 use crate::{camera::Camera, vertex::Vertex};
 
 pub struct Scene {
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     index_count: usize,
+    camera: Camera,
     camera_uniform_bind_group: wgpu::BindGroup,
     camera_uniform_buffer: wgpu::Buffer,
     render_pipeline: wgpu::RenderPipeline,
@@ -110,20 +114,12 @@ impl Scene {
             100.0,
         );
 
-        let camera_uniform_data: [[f32; 4]; 4] = camera.get_view_projection_matrix().into();
-
         let camera_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera uniform buffer"),
             size: size_of::<f32>() as u64 * 16,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-
-        queue.write_buffer(
-            &camera_uniform_buffer,
-            0,
-            bytemuck::cast_slice(&camera_uniform_data),
-        );
 
         let camera_uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -199,6 +195,7 @@ impl Scene {
             vertex_buffer,
             index_buffer,
             index_count: indices.len(),
+            camera,
             camera_uniform_bind_group,
             camera_uniform_buffer,
             render_pipeline,
@@ -206,6 +203,15 @@ impl Scene {
     }
 
     pub fn render(&self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+        println!("Camera position: {:?}", self.camera.position);
+        let camera_uniform_data: [[f32; 4]; 4] = self.camera.get_view_projection_matrix().into();
+
+        queue.write_buffer(
+            &self.camera_uniform_buffer,
+            0,
+            bytemuck::cast_slice(&camera_uniform_data),
+        );
+
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Render encoder"),
         });
@@ -241,5 +247,13 @@ impl Scene {
         let command_buffer = encoder.finish();
 
         queue.submit(std::iter::once(command_buffer));
+    }
+
+    pub fn move_camera(&mut self, code: KeyCode) {
+        match code {
+            KeyCode::KeyA => self.camera.position += Vector3::new(1.0, 0.0, 0.0),
+            KeyCode::KeyD => self.camera.position += Vector3::new(-1.0, 0.0, 0.0),
+            _ => {}
+        }
     }
 }

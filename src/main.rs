@@ -2,10 +2,9 @@ mod camera;
 mod scene;
 mod vertex;
 
-use log::info;
 use scene::Scene;
 use winit::{
-    event::{Event, KeyEvent, WindowEvent},
+    event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowBuilder},
@@ -13,7 +12,7 @@ use winit::{
 
 struct Setup {
     event_loop: EventLoop<()>,
-    _window: Window,
+    window: Window,
     surface: wgpu::Surface,
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
@@ -83,7 +82,7 @@ async fn wgpu_init() -> Setup {
 
     Setup {
         event_loop,
-        _window: window,
+        window,
         surface,
         config,
         device,
@@ -94,6 +93,7 @@ async fn wgpu_init() -> Setup {
 fn run(
     Setup {
         surface,
+        window,
         mut config,
         device,
         queue,
@@ -101,44 +101,45 @@ fn run(
         ..
     }: Setup,
 ) {
-    let scene = Scene::init(&device, &queue, &config);
+    let mut scene = Scene::init(&device, &queue, &config);
 
     // Event loop
-    event_loop
-        .run(move |event, elwt| {
-            if let Event::WindowEvent { event, .. } = event {
-                match event {
-                    WindowEvent::CloseRequested => elwt.exit(),
-                    WindowEvent::KeyboardInput { event, .. } => {
-                        if let PhysicalKey::Code(code) = event.physical_key {
-                            match code {
-                                KeyCode::Escape => elwt.exit(),
-                                KeyCode::KeyA => {}
-                                _ => (),
-                            }
+    let _ = event_loop.run(move |event, elwt| {
+        elwt.set_control_flow(ControlFlow::Poll);
+
+        match event {
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => elwt.exit(),
+                WindowEvent::KeyboardInput { event, .. } => {
+                    if let PhysicalKey::Code(code) = event.physical_key {
+                        match code {
+                            KeyCode::Escape => elwt.exit(),
+                            _ => scene.move_camera(code),
                         }
                     }
-                    WindowEvent::Resized(new_size) => {
-                        config.height = new_size.height;
-                        config.width = new_size.width;
-                        surface.configure(&device, &config);
-                    }
-                    WindowEvent::RedrawRequested => {
-                        let current_texture = surface.get_current_texture().unwrap();
-                        let view = current_texture
-                            .texture
-                            .create_view(&wgpu::TextureViewDescriptor::default());
+                }
+                WindowEvent::Resized(new_size) => {
+                    config.height = new_size.height;
+                    config.width = new_size.width;
+                    surface.configure(&device, &config);
+                }
+                WindowEvent::RedrawRequested => {
+                    let current_texture = surface.get_current_texture().unwrap();
+                    let view = current_texture
+                        .texture
+                        .create_view(&wgpu::TextureViewDescriptor::default());
 
-                        scene.render(&view, &device, &queue);
-                        current_texture.present();
-                    }
-                    _ => {}
-                };
+                    scene.render(&view, &device, &queue);
+                    current_texture.present();
+                }
+                _ => {}
+            },
+            Event::AboutToWait => {
+                window.request_redraw();
             }
-        })
-        .unwrap_or_else(|error| {
-            info!("Problem on the window event loop: {:?}", error);
-        });
+            _ => {}
+        }
+    });
 }
 
 fn main() {
