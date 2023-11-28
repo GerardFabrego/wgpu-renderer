@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use cgmath::{Point3, Vector3};
+use cgmath::Vector3;
 use winit::keyboard::KeyCode;
 
 use crate::{camera::Camera, vertex::Vertex};
