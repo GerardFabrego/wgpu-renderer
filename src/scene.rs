@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use cgmath::Vector3;
-use winit::keyboard::KeyCode;
+use winit::{dpi::PhysicalSize, keyboard::KeyCode};
 
 use crate::{camera::Camera, vertex::Vertex};
 
@@ -254,5 +254,9 @@ impl Scene {
             KeyCode::KeyD => self.camera.position += Vector3::new(-1.0, 0.0, 0.0),
             _ => {}
         }
+    }
+
+    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
+        self.camera.aspect = new_size.width as f32 / new_size.height as f32;
     }
 }

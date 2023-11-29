@@ -122,6 +122,7 @@ fn run(
                     config.height = new_size.height;
                     config.width = new_size.width;
                     surface.configure(&device, &config);
+                    scene.resize(new_size)
                 }
                 WindowEvent::RedrawRequested => {
                     let current_texture = surface.get_current_texture().unwrap();

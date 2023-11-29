@@ -3,7 +3,7 @@ use cgmath::{perspective, Deg, Matrix4, Point3, Vector3};
 pub struct Camera {
     pub position: Point3<f32>,
     target: Point3<f32>,
-    aspect: f32,
+    pub aspect: f32,
     fovy: f32,
     znear: f32,
     zfar: f32,
