@@ -1,17 +1,16 @@
 mod camera;
 mod scene;
 mod vertex;
+mod window;
 
 use scene::Scene;
+use window::Window;
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
-    window::{Window, WindowBuilder},
 };
 
 struct Setup {
-    event_loop: EventLoop<()>,
     window: Window,
     surface: wgpu::Surface,
     config: wgpu::SurfaceConfiguration,
@@ -20,12 +19,7 @@ struct Setup {
 }
 
 async fn wgpu_init() -> Setup {
-    let event_loop = EventLoop::new().unwrap();
-    event_loop.set_control_flow(ControlFlow::Poll);
-
-    let window: Window = WindowBuilder::new()
-        .build(&event_loop)
-        .expect("There was an error when building the window");
+    let window = Window::new();
 
     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
         backends: wgpu::Backends::PRIMARY,
@@ -34,7 +28,7 @@ async fn wgpu_init() -> Setup {
         gles_minor_version: Default::default(),
     });
 
-    let surface = unsafe { instance.create_surface(&window) }.unwrap();
+    let surface = unsafe { instance.create_surface(&window.window) }.unwrap();
 
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -66,13 +60,13 @@ async fn wgpu_init() -> Setup {
         .find(|f| f.is_srgb())
         .unwrap_or(surface_capabilities.formats[0]);
 
-    let size = window.inner_size();
+    let (width, height) = window.inner_size();
 
     let config = wgpu::SurfaceConfiguration {
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
         format: surface_format,
-        width: size.width,
-        height: size.height,
+        width,
+        height,
         present_mode: wgpu::PresentMode::Fifo,
         alpha_mode: surface_capabilities.alpha_modes[0],
         view_formats: vec![],
@@ -81,7 +75,6 @@ async fn wgpu_init() -> Setup {
     surface.configure(&device, &config);
 
     Setup {
-        event_loop,
         window,
         surface,
         config,
@@ -97,49 +90,44 @@ fn run(
         mut config,
         device,
         queue,
-        event_loop,
         ..
     }: Setup,
 ) {
     let mut scene = Scene::init(&device, &queue, &config);
 
     // Event loop
-    let _ = event_loop.run(move |event, elwt| {
-        elwt.set_control_flow(ControlFlow::Poll);
-
-        match event {
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::CloseRequested => elwt.exit(),
-                WindowEvent::KeyboardInput { event, .. } => {
-                    if let PhysicalKey::Code(code) = event.physical_key {
-                        match code {
-                            KeyCode::Escape => elwt.exit(),
-                            _ => scene.move_camera(code),
-                        }
+    let _ = window.run(move |event, elwt| match event {
+        Event::WindowEvent { event, .. } => match event {
+            WindowEvent::CloseRequested => elwt.exit(),
+            WindowEvent::KeyboardInput { event, .. } => {
+                if let PhysicalKey::Code(code) = event.physical_key {
+                    match code {
+                        KeyCode::Escape => elwt.exit(),
+                        _ => scene.move_camera(code),
                     }
                 }
-                WindowEvent::Resized(new_size) => {
-                    config.height = new_size.height;
-                    config.width = new_size.width;
-                    surface.configure(&device, &config);
-                    scene.resize(new_size)
-                }
-                WindowEvent::RedrawRequested => {
-                    let current_texture = surface.get_current_texture().unwrap();
-                    let view = current_texture
-                        .texture
-                        .create_view(&wgpu::TextureViewDescriptor::default());
+            }
+            WindowEvent::Resized(new_size) => {
+                config.height = new_size.height;
+                config.width = new_size.width;
+                surface.configure(&device, &config);
+                scene.resize(new_size)
+            }
+            WindowEvent::RedrawRequested => {
+                let current_texture = surface.get_current_texture().unwrap();
+                let view = current_texture
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
 
-                    scene.render(&view, &device, &queue);
-                    current_texture.present();
-                }
-                _ => {}
-            },
-            Event::AboutToWait => {
-                window.request_redraw();
+                scene.render(&view, &device, &queue);
+                current_texture.present();
             }
             _ => {}
+        },
+        Event::AboutToWait => {
+            window.request_redraw();
         }
+        _ => {}
     });
 }
 
