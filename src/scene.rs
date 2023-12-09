@@ -1,9 +1,8 @@
 use std::mem::size_of;
 
 use cgmath::Vector3;
-use winit::{dpi::PhysicalSize, keyboard::KeyCode};
 
-use crate::{camera::Camera, vertex::Vertex};
+use crate::{camera::Camera, vertex::Vertex, window::Key};
 
 pub struct Scene {
     vertex_buffer: wgpu::Buffer,
@@ -248,15 +247,15 @@ impl Scene {
         queue.submit(std::iter::once(command_buffer));
     }
 
-    pub fn move_camera(&mut self, code: KeyCode) {
+    pub fn move_camera(&mut self, code: Key) {
         match code {
-            KeyCode::KeyA => self.camera.position += Vector3::new(1.0, 0.0, 0.0),
-            KeyCode::KeyD => self.camera.position += Vector3::new(-1.0, 0.0, 0.0),
+            Key::Left => self.camera.position += Vector3::new(1.0, 0.0, 0.0),
+            Key::Right => self.camera.position += Vector3::new(-1.0, 0.0, 0.0),
             _ => {}
         }
     }
 
-    pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
-        self.camera.aspect = new_size.width as f32 / new_size.height as f32;
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.camera.aspect = width as f32 / height as f32;
     }
 }

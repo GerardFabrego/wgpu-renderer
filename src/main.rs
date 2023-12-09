@@ -4,11 +4,7 @@ mod vertex;
 mod window;
 
 use scene::Scene;
-use window::Window;
-use winit::{
-    event::{Event, WindowEvent},
-    keyboard::{KeyCode, PhysicalKey},
-};
+use window::{Event, Window};
 
 struct Setup {
     window: Window,
@@ -96,38 +92,23 @@ fn run(
     let mut scene = Scene::init(&device, &queue, &config);
 
     // Event loop
-    let _ = window.run(move |event, elwt| match event {
-        Event::WindowEvent { event, .. } => match event {
-            WindowEvent::CloseRequested => elwt.exit(),
-            WindowEvent::KeyboardInput { event, .. } => {
-                if let PhysicalKey::Code(code) = event.physical_key {
-                    match code {
-                        KeyCode::Escape => elwt.exit(),
-                        _ => scene.move_camera(code),
-                    }
-                }
-            }
-            WindowEvent::Resized(new_size) => {
-                config.height = new_size.height;
-                config.width = new_size.width;
-                surface.configure(&device, &config);
-                scene.resize(new_size)
-            }
-            WindowEvent::RedrawRequested => {
-                let current_texture = surface.get_current_texture().unwrap();
-                let view = current_texture
-                    .texture
-                    .create_view(&wgpu::TextureViewDescriptor::default());
-
-                scene.render(&view, &device, &queue);
-                current_texture.present();
-            }
-            _ => {}
-        },
-        Event::AboutToWait => {
-            window.request_redraw();
+    window.run(move |event| match event {
+        Event::Resize(width, height) => {
+            scene.resize(width, height);
+            config.width = width;
+            config.height = height;
+            surface.configure(&device, &config);
         }
-        _ => {}
+        Event::Draw => {
+            let current_texture = surface.get_current_texture().unwrap();
+            let view = current_texture
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
+
+            scene.render(&view, &device, &queue);
+            current_texture.present();
+        }
+        Event::KeyboardInput(key) => scene.move_camera(key),
     });
 }
 
