@@ -1,4 +1,5 @@
 mod camera;
+mod object;
 mod scene;
 mod vertex;
 mod window;
@@ -92,7 +93,7 @@ fn run(
     let mut scene = Scene::init(&device, &queue, &config);
 
     // Event loop
-    window.run(move |event| match event {
+    window.run(|event| match event {
         Event::Resize(width, height) => {
             scene.resize(width, height);
             config.width = width;
@@ -105,10 +106,10 @@ fn run(
                 .texture
                 .create_view(&wgpu::TextureViewDescriptor::default());
 
-            scene.render(&view, &device, &queue);
+            scene.render(&view);
             current_texture.present();
         }
-        Event::KeyboardInput(key) => scene.move_camera(key),
+        Event::KeyboardInput(key) => scene.camera.move_camera(key),
     });
 }
 
