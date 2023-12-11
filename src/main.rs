@@ -1,6 +1,7 @@
 mod camera;
 mod object;
 mod scene;
+mod texture;
 mod vertex;
 mod window;
 
