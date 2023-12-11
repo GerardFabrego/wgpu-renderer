@@ -37,7 +37,7 @@ impl<'a> Scene<'a> {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render pipeline layout"),
-            bind_group_layouts: &[&camera.bind_group_layout],
+            bind_group_layouts: &[&object.bind_group_layout, &camera.bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -113,7 +113,8 @@ impl<'a> Scene<'a> {
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.camera.uniform_bind_group, &[]);
+        render_pass.set_bind_group(0, &self.object.bind_group, &[]); // NEW!
+        render_pass.set_bind_group(1, &self.camera.uniform_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.object.vertex_buffer.slice(..));
         render_pass.set_index_buffer(
             self.object.index_buffer.slice(..),

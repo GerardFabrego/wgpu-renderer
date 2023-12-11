@@ -4,5 +4,5 @@ use bytemuck::{Pod, Zeroable};
 #[derive(Copy, Clone, Zeroable, Pod)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub color: [f32; 3],
+    pub text_coords: [f32; 2],
 }
