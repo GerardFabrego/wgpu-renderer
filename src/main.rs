@@ -5,6 +5,7 @@ mod texture;
 mod vertex;
 mod window;
 
+use cgmath::Vector3;
 use scene::Scene;
 use window::{Event, Window};
 
@@ -110,7 +111,11 @@ fn run(
             scene.render(&view);
             current_texture.present();
         }
-        Event::KeyboardInput(key) => scene.camera.move_camera(key),
+        Event::KeyboardInput(key) => match key {
+            window::Key::Left => scene.camera.translate(Vector3::new(-1.0, 0.0, 0.0)),
+            window::Key::Right => scene.camera.translate(Vector3::new(1.0, 0.0, 0.0)),
+            _ => {}
+        },
     });
 }
 

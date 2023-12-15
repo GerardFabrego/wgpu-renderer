@@ -19,14 +19,14 @@ impl<'a> Scene<'a> {
     ) -> Self {
         let object = Object::new(device, queue);
 
-        let camera_descriptor = CameraDescriptor::new(
-            (0.0, 2.0, 4.0).into(),
-            (0.0, 0.0, 0.0).into(),
-            config.width as f32 / config.height as f32,
-            45.0,
-            0.1,
-            100.0,
-        );
+        let camera_descriptor = CameraDescriptor {
+            position: (0.0, 2.0, 4.0).into(),
+            target: (0.0, 0.0, 0.0).into(),
+            aspect: config.width as f32 / config.height as f32,
+            fovy: 45.0,
+            znear: 0.1,
+            zfar: 100.0,
+        };
 
         let camera = Camera::new(camera_descriptor, device, queue);
 
@@ -113,7 +113,7 @@ impl<'a> Scene<'a> {
         });
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &self.object.bind_group, &[]); // NEW!
+        render_pass.set_bind_group(0, &self.object.bind_group, &[]);
         render_pass.set_bind_group(1, &self.camera.uniform_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.object.vertex_buffer.slice(..));
         render_pass.set_index_buffer(
