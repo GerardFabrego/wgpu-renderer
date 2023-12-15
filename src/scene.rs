@@ -21,7 +21,7 @@ impl<'a> Scene<'a> {
 
         let camera_descriptor = CameraDescriptor {
             position: (0.0, 2.0, 4.0).into(),
-            target: (0.0, 0.0, 0.0).into(),
+            direction: (0.0, 0.0, -1.0).into(),
             aspect: config.width as f32 / config.height as f32,
             fovy: 45.0,
             znear: 0.1,

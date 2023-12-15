@@ -112,8 +112,18 @@ fn run(
             current_texture.present();
         }
         Event::KeyboardInput(key) => match key {
-            window::Key::Left => scene.camera.translate(Vector3::new(-1.0, 0.0, 0.0)),
-            window::Key::Right => scene.camera.translate(Vector3::new(1.0, 0.0, 0.0)),
+            window::Key::Left | window::Key::Letter('a') => {
+                scene.camera.translate(Vector3::new(-1.0, 0.0, 0.0))
+            }
+            window::Key::Right | window::Key::Letter('d') => {
+                scene.camera.translate(Vector3::new(1.0, 0.0, 0.0))
+            }
+            window::Key::Up | window::Key::Letter('w') => {
+                scene.camera.translate(Vector3::new(0.0, 1.0, 0.0))
+            }
+            window::Key::Down | window::Key::Letter('s') => {
+                scene.camera.translate(Vector3::new(0.0, -1.0, 0.0))
+            }
             _ => {}
         },
     });
