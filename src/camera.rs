@@ -37,19 +37,7 @@ impl<'a> Camera<'a> {
             mapped_at_creation: false,
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Uniform buffer bind group layout"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout = Camera::get_bind_group_layout(device);
 
         let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Uniform buffer bind group"),
@@ -131,6 +119,22 @@ impl<'a> Camera<'a> {
 
         self.direction = x_rotation_matrix * y_rotation_matrix * self.direction;
         self.update_camera_buffer();
+    }
+
+    pub fn get_bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout{
+        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Uniform buffer bind group layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            }],
+        })
     }
 }
 

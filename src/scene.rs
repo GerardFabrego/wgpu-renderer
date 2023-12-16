@@ -7,7 +7,7 @@ pub struct Scene<'a> {
     device: &'a wgpu::Device,
     queue: &'a wgpu::Queue,
     object: Object,
-    pub camera: Camera<'a>,
+    // pub camera: Camera<'a>,
     render_pipeline: wgpu::RenderPipeline,
 }
 
@@ -19,17 +19,6 @@ impl<'a> Scene<'a> {
     ) -> Self {
         let object = Object::new(device, queue);
 
-        let camera_descriptor = CameraDescriptor {
-            position: (0.0, 2.0, 4.0).into(),
-            direction: (0.0, 0.0, -1.0).into(),
-            aspect: config.width as f32 / config.height as f32,
-            fovy: 45.0,
-            znear: 0.1,
-            zfar: 100.0,
-        };
-
-        let camera = Camera::new(camera_descriptor, device, queue);
-
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -37,7 +26,10 @@ impl<'a> Scene<'a> {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render pipeline layout"),
-            bind_group_layouts: &[&object.bind_group_layout, &camera.bind_group_layout],
+            bind_group_layouts: &[
+                &object.bind_group_layout,
+                &Camera::get_bind_group_layout(device),
+            ],
             push_constant_ranges: &[],
         });
 
@@ -80,12 +72,12 @@ impl<'a> Scene<'a> {
             device,
             queue,
             object,
-            camera,
+            // camera,
             render_pipeline,
         }
     }
 
-    pub fn render(&self, view: &wgpu::TextureView) {
+    pub fn render(&self, view: &wgpu::TextureView, camera: &Camera) {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -114,7 +106,7 @@ impl<'a> Scene<'a> {
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &self.object.bind_group, &[]);
-        render_pass.set_bind_group(1, &self.camera.uniform_bind_group, &[]);
+        render_pass.set_bind_group(1, &camera.uniform_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.object.vertex_buffer.slice(..));
         render_pass.set_index_buffer(
             self.object.index_buffer.slice(..),
@@ -129,7 +121,7 @@ impl<'a> Scene<'a> {
         self.queue.submit(std::iter::once(command_buffer));
     }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
-        self.camera.resize(width, height);
-    }
+    // pub fn resize(&mut self, width: u32, height: u32) {
+    //     self.camera.resize(width, height);
+    // }
 }

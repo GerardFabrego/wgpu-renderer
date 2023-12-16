@@ -5,6 +5,7 @@ mod texture;
 mod vertex;
 mod window;
 
+use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
 use scene::Scene;
 use window::{Event, Window};
@@ -92,12 +93,23 @@ fn run(
         ..
     }: Setup,
 ) {
-    let mut scene = Scene::init(&device, &queue, &config);
+    let scene = Scene::init(&device, &queue, &config);
+
+    let camera_descriptor = CameraDescriptor {
+        position: (0.0, 2.0, 4.0).into(),
+        direction: (0.0, 0.0, -1.0).into(),
+        aspect: config.width as f32 / config.height as f32,
+        fovy: 45.0,
+        znear: 0.1,
+        zfar: 100.0,
+    };
+
+    let mut camera = Camera::new(camera_descriptor, &device, &queue);
 
     // Event loop
     window.run(|event, window_commands| match event {
         Event::Resize(width, height) => {
-            scene.resize(width, height);
+            camera.resize(width, height);
             config.width = width;
             config.height = height;
             surface.configure(&device, &config);
@@ -108,26 +120,26 @@ fn run(
                 .texture
                 .create_view(&wgpu::TextureViewDescriptor::default());
 
-            scene.render(&view);
+            scene.render(&view, &camera);
             current_texture.present();
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {
-                scene.camera.translate(Vector3::new(-1.0, 0.0, 0.0))
+                camera.translate(Vector3::new(-1.0, 0.0, 0.0))
             }
             window::Key::Right | window::Key::Letter('d') => {
-                scene.camera.translate(Vector3::new(1.0, 0.0, 0.0))
+                camera.translate(Vector3::new(1.0, 0.0, 0.0))
             }
             window::Key::Up | window::Key::Letter('w') => {
-                scene.camera.translate(Vector3::new(0.0, 1.0, 0.0))
+                camera.translate(Vector3::new(0.0, 1.0, 0.0))
             }
             window::Key::Down | window::Key::Letter('s') => {
-                scene.camera.translate(Vector3::new(0.0, -1.0, 0.0))
+                camera.translate(Vector3::new(0.0, -1.0, 0.0))
             }
             window::Key::Escape => window_commands.exit(),
             _ => {}
         },
-        Event::MouseMove(y, x) => scene.camera.rotate(y, x),
+        Event::MouseMove(y, x) => camera.rotate(y, x),
     });
 }
 
