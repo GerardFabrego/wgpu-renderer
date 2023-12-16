@@ -103,6 +103,35 @@ impl<'a> Camera<'a> {
         self.position += translation;
         self.update_camera_buffer();
     }
+
+    pub fn rotate(&mut self, y_rotation: f32, x_rotation: f32) {
+        let rotation_speed = 0.01;
+        let x_rotation = x_rotation * rotation_speed;
+        let y_rotation = y_rotation * rotation_speed;
+        
+        let cos_x = x_rotation.cos();
+        let sin_x = x_rotation.sin();
+
+        let cos_y = y_rotation.cos();
+        let sin_y = y_rotation.sin();
+
+        #[rustfmt::skip]
+        let x_rotation_matrix = cgmath::Matrix3::new(
+            1.0, 0.0, 0.0, 
+            0.0, cos_x, -sin_x, 
+            0.0, sin_x, cos_x
+        );
+
+        #[rustfmt::skip]
+        let y_rotation_matrix = cgmath::Matrix3::new(
+            cos_y, 0.0, sin_y, 
+            0.0, 1.0, 0.0, 
+            -sin_y, 0.0, cos_y
+        );
+
+        self.direction = x_rotation_matrix * y_rotation_matrix * self.direction;
+        self.update_camera_buffer();
+    }
 }
 
 #[rustfmt::skip]

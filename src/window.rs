@@ -1,7 +1,7 @@
 use std::fmt;
 
 use winit::{
-    event::{Event as WinitEvent, WindowEvent},
+    event::{DeviceEvent, Event as WinitEvent, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     keyboard::{KeyCode as WinitKeyCode, PhysicalKey},
     window::{self, WindowBuilder},
@@ -10,6 +10,7 @@ use winit::{
 pub enum Event {
     Resize(u32, u32),
     KeyboardInput(Key),
+    MouseMove(f32, f32),
     Draw,
 }
 
@@ -97,6 +98,10 @@ impl Window {
                     WindowEvent::RedrawRequested => callback(Event::Draw),
                     _ => (),
                 },
+                WinitEvent::DeviceEvent {
+                    event: DeviceEvent::MouseMotion { delta },
+                    ..
+                } => callback(Event::MouseMove(delta.0 as f32, delta.1 as f32)),
                 WinitEvent::AboutToWait => {
                     self.window.request_redraw();
                 }

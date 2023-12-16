@@ -126,6 +126,7 @@ fn run(
             }
             _ => {}
         },
+        Event::MouseMove(x, y) => scene.camera.rotate(x, y),
     });
 }
 
