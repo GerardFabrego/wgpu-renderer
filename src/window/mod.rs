@@ -1,41 +1,17 @@
-use std::fmt;
+mod commands;
+mod events;
 
 use winit::{
     event::{DeviceEvent, Event as WinitEvent, KeyEvent, WindowEvent},
-    event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
+    event_loop::{ControlFlow, EventLoop},
     keyboard::{KeyCode as WinitKeyCode, PhysicalKey},
     window::{self, WindowBuilder},
 };
 
-pub enum Event {
-    Resize(u32, u32),
-    KeyboardInput(Key),
-    MouseMove(f32, f32),
-    Draw,
-}
-
-#[derive(Debug)]
-pub enum Key {
-    Digit(u8),
-    Letter(char),
-    Escape,
-    Up,
-    Down,
-    Left,
-    Right,
-    Space,
-    Other,
-}
-
-impl fmt::Display for Key {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Key::Digit(digit) => write!(f, "{}", digit),
-            Key::Letter(character) => write!(f, "{}", character.to_lowercase()),
-            _ => write!(f, ""),
-        }
-    }
-}
+pub use self::{
+    commands::WindowCommands,
+    events::{Event, Key},
+};
 
 pub struct Window {
     pub event_loop: EventLoop<()>,
@@ -59,7 +35,7 @@ impl Window {
         (size.height, size.width)
     }
 
-    pub fn run(self, mut callback: impl FnMut(Event)) {
+    pub fn run(self, mut callback: impl FnMut(Event, WindowCommands)) {
         self.event_loop
             .run(move |event, elwt| {
                 let event = match event {
@@ -118,7 +94,8 @@ impl Window {
                 };
 
                 if let Some(event) = event {
-                    callback(event);
+                    let window_actions = WindowCommands::new(elwt);
+                    callback(event, window_actions);
                 }
             })
             .expect("There was an error while running the event loop");

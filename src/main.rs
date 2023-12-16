@@ -95,7 +95,7 @@ fn run(
     let mut scene = Scene::init(&device, &queue, &config);
 
     // Event loop
-    window.run(|event| match event {
+    window.run(|event, window_commands| match event {
         Event::Resize(width, height) => {
             scene.resize(width, height);
             config.width = width;
@@ -124,7 +124,7 @@ fn run(
             window::Key::Down | window::Key::Letter('s') => {
                 scene.camera.translate(Vector3::new(0.0, -1.0, 0.0))
             }
-            window::Key::Escape => {}
+            window::Key::Escape => window_commands.exit(),
             _ => {}
         },
         Event::MouseMove(y, x) => scene.camera.rotate(y, x),
