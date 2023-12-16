@@ -1,8 +1,8 @@
 use std::fmt;
 
 use winit::{
-    event::{DeviceEvent, Event as WinitEvent, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
+    event::{DeviceEvent, Event as WinitEvent, KeyEvent, WindowEvent},
+    event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
     keyboard::{KeyCode as WinitKeyCode, PhysicalKey},
     window::{self, WindowBuilder},
 };
@@ -61,13 +61,22 @@ impl Window {
 
     pub fn run(self, mut callback: impl FnMut(Event)) {
         self.event_loop
-            .run(move |event, elwt| match event {
-                WinitEvent::WindowEvent { event, .. } => match event {
-                    WindowEvent::CloseRequested => elwt.exit(),
-
-                    WindowEvent::KeyboardInput { event, .. } => {
-                        if let PhysicalKey::Code(code) = event.physical_key {
-                            let key: Key = match code {
+            .run(move |event, elwt| {
+                let event = match event {
+                    WinitEvent::WindowEvent { event, .. } => match event {
+                        WindowEvent::CloseRequested => {
+                            elwt.exit();
+                            None
+                        }
+                        WindowEvent::KeyboardInput {
+                            event:
+                                KeyEvent {
+                                    physical_key: PhysicalKey::Code(code),
+                                    ..
+                                },
+                            ..
+                        } => {
+                            let key = match code {
                                 WinitKeyCode::ArrowLeft => Key::Left,
                                 WinitKeyCode::ArrowRight => Key::Right,
                                 WinitKeyCode::ArrowUp => Key::Up,
@@ -88,24 +97,29 @@ impl Window {
                                 }
                                 _ => Key::Other,
                             };
-                            callback(Event::KeyboardInput(key))
+                            Some(Event::KeyboardInput(key))
                         }
-                    }
-                    WindowEvent::Resized(new_size) => {
-                        callback(Event::Resize(new_size.width, new_size.height))
-                    }
+                        WindowEvent::Resized(new_size) => {
+                            Some(Event::Resize(new_size.width, new_size.height))
+                        }
+                        WindowEvent::RedrawRequested => Some(Event::Draw),
+                        _ => None,
+                    },
+                    WinitEvent::DeviceEvent {
+                        event: DeviceEvent::MouseMotion { delta },
+                        ..
+                    } => Some(Event::MouseMove(delta.0 as f32, delta.1 as f32)),
 
-                    WindowEvent::RedrawRequested => callback(Event::Draw),
-                    _ => (),
-                },
-                WinitEvent::DeviceEvent {
-                    event: DeviceEvent::MouseMotion { delta },
-                    ..
-                } => callback(Event::MouseMove(delta.0 as f32, delta.1 as f32)),
-                WinitEvent::AboutToWait => {
-                    self.window.request_redraw();
+                    WinitEvent::AboutToWait => {
+                        self.window.request_redraw();
+                        None
+                    }
+                    _ => None,
+                };
+
+                if let Some(event) = event {
+                    callback(event);
                 }
-                _ => {}
             })
             .expect("There was an error while running the event loop");
     }

@@ -124,9 +124,10 @@ fn run(
             window::Key::Down | window::Key::Letter('s') => {
                 scene.camera.translate(Vector3::new(0.0, -1.0, 0.0))
             }
+            window::Key::Escape => {}
             _ => {}
         },
-        Event::MouseMove(x, y) => scene.camera.rotate(x, y),
+        Event::MouseMove(y, x) => scene.camera.rotate(y, x),
     });
 }
 
