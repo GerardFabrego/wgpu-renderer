@@ -72,7 +72,6 @@ impl<'a> Scene<'a> {
             device,
             queue,
             object,
-            // camera,
             render_pipeline,
         }
     }
@@ -120,8 +119,4 @@ impl<'a> Scene<'a> {
 
         self.queue.submit(std::iter::once(command_buffer));
     }
-
-    // pub fn resize(&mut self, width: u32, height: u32) {
-    //     self.camera.resize(width, height);
-    // }
 }
