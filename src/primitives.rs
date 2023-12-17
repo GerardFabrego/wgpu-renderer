@@ -49,7 +49,7 @@ fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     (vertices, indices)
 }
 
-pub struct Object {
+pub struct Cube {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub index_count: usize,
@@ -57,7 +57,7 @@ pub struct Object {
     pub bind_group: wgpu::BindGroup,
 }
 
-impl Object {
+impl Cube {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let texture_bytes = include_bytes!("../res/textures/test.png");
         let texture = Texture::from_bytes(device, queue, texture_bytes);

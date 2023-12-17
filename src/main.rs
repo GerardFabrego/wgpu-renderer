@@ -1,12 +1,12 @@
 mod camera;
-mod object;
+mod primitives;
 mod texture;
 mod vertex;
 mod window;
 
 use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
-use object::Object;
+use primitives::Cube;
 use window::{Event, Window};
 
 struct Setup {
@@ -92,7 +92,7 @@ fn run(
         ..
     }: Setup,
 ) {
-    let object = Object::new(&device, &queue);
+    let object = Cube::new(&device, &queue);
 
     let camera_descriptor = CameraDescriptor {
         position: (0.0, 2.0, 4.0).into(),
@@ -122,7 +122,7 @@ fn run(
         vertex: wgpu::VertexState {
             module: &shader,
             entry_point: "vs_main",
-            buffers: &[Object::desc()],
+            buffers: &[Cube::desc()],
         },
         fragment: Some(wgpu::FragmentState {
             module: &shader,
