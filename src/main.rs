@@ -1,13 +1,12 @@
 mod camera;
 mod object;
-mod scene;
 mod texture;
 mod vertex;
 mod window;
 
 use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
-use scene::Scene;
+use object::Object;
 use window::{Event, Window};
 
 struct Setup {
@@ -93,7 +92,7 @@ fn run(
         ..
     }: Setup,
 ) {
-    let scene = Scene::init(&device, &queue, &config);
+    let object = Object::new(&device, &queue);
 
     let camera_descriptor = CameraDescriptor {
         position: (0.0, 2.0, 4.0).into(),
@@ -105,6 +104,52 @@ fn run(
     };
 
     let mut camera = Camera::new(camera_descriptor, &device, &queue);
+
+    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        label: Some("Shader"),
+        source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+    });
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render pipeline layout"),
+        bind_group_layouts: &[&object.bind_group_layout, &camera.bind_group_layout],
+        push_constant_ranges: &[],
+    });
+
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("Render pipeline"),
+        layout: Some(&pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: "vs_main",
+            buffers: &[Object::desc()],
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: "fs_main",
+            targets: &[Some(wgpu::ColorTargetState {
+                format: config.format,
+                blend: Some(wgpu::BlendState::REPLACE),
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            unclipped_depth: false,
+            polygon_mode: wgpu::PolygonMode::Fill,
+            conservative: false,
+        },
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+        multiview: None,
+    });
 
     // Event loop
     window.run(|event, window_commands| match event {
@@ -120,7 +165,42 @@ fn run(
                 .texture
                 .create_view(&wgpu::TextureViewDescriptor::default());
 
-            scene.render(&view, &camera);
+            let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render encoder"),
+            });
+
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.2,
+                            g: 0.8,
+                            b: 0.5,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            render_pass.set_pipeline(&render_pipeline);
+            render_pass.set_bind_group(0, &object.bind_group, &[]);
+            render_pass.set_bind_group(1, &camera.uniform_bind_group, &[]);
+            render_pass.set_vertex_buffer(0, object.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(object.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+            render_pass.draw_indexed(0..object.index_count as u32, 0, 0..2);
+
+            drop(render_pass);
+
+            let command_buffer = encoder.finish();
+
+            queue.submit(std::iter::once(command_buffer));
             current_texture.present();
         }
         Event::KeyboardInput(key) => match key {
