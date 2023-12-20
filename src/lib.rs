@@ -11,7 +11,7 @@ use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
-use primitives::Cube;
+use primitives::{Cube, Transform};
 use window::{Event, Window};
 
 pub async fn run() {
@@ -24,7 +24,13 @@ pub async fn run() {
         surface,
     }: GraphicsContext = GraphicsContext::new(&window).await;
 
-    let object = Cube::new(&device, &queue)
+    let transform: Transform = Transform {
+        position: Vector3::new(1.5, 0.0, -10.0),
+        scale: Vector3::new(1.0, 1.0, 1.0),
+        rotation: cgmath::Quaternion::new(0.0, 0.0, 0.0, 0.0),
+    };
+
+    let object = Cube::new(&device, &queue, transform)
         .await
         .expect("Error when creating cube");
 

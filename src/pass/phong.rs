@@ -2,7 +2,7 @@ use std::mem::size_of;
 
 use crate::{
     camera::{Camera, CameraUniform},
-    primitives::Cube,
+    primitives::{Cube, TransformRaw},
 };
 
 pub struct PhongPass {
@@ -10,9 +10,42 @@ pub struct PhongPass {
     pipeline: wgpu::RenderPipeline,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    transform_buffer: wgpu::Buffer,
+    transform_bind_group: wgpu::BindGroup,
 }
 impl PhongPass {
     pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> PhongPass {
+        let transform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Camera uniform buffer"),
+            size: size_of::<[[f32; 4]; 4]>() as u64,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let transform_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Transform bind group layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
+        let transform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Transform bind group"),
+            layout: &transform_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: transform_buffer.as_entire_binding(),
+            }],
+        });
+
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
@@ -68,7 +101,11 @@ impl PhongPass {
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render pipeline layout"),
-            bind_group_layouts: &[&bind_group_layout, &camera_bind_group_layout],
+            bind_group_layouts: &[
+                &transform_bind_group_layout,
+                &bind_group_layout,
+                &camera_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -117,6 +154,8 @@ impl PhongPass {
             pipeline,
             camera_buffer,
             camera_bind_group,
+            transform_buffer,
+            transform_bind_group,
         }
     }
 
@@ -138,16 +177,22 @@ impl super::Pass for PhongPass {
         queue: &wgpu::Queue,
         object: &crate::primitives::Cube,
     ) {
+        queue.write_buffer(
+            &self.transform_buffer,
+            0,
+            bytemuck::cast_slice(&[TransformRaw::from(&object.transform)]),
+        );
+
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&object.texture.view),
+                    resource: wgpu::BindingResource::TextureView(&object.get_texture().view),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&object.texture.sampler),
+                    resource: wgpu::BindingResource::Sampler(&object.get_texture().sampler),
                 },
             ],
             label: Some("diffuse_bind_group"),
@@ -183,11 +228,15 @@ impl super::Pass for PhongPass {
         });
 
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &bind_group, &[]);
-        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-        render_pass.set_vertex_buffer(0, object.vertex_buffer.slice(..));
-        render_pass.set_index_buffer(object.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-        render_pass.draw_indexed(0..object.index_count as u32, 0, 0..2);
+        render_pass.set_bind_group(0, &self.transform_bind_group, &[]);
+        render_pass.set_bind_group(1, &bind_group, &[]);
+        render_pass.set_bind_group(2, &self.camera_bind_group, &[]);
+        render_pass.set_vertex_buffer(0, object.get_vertex_buffer().slice(..));
+        render_pass.set_index_buffer(
+            object.get_index_buffer().slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+        render_pass.draw_indexed(0..object.get_index_count() as u32, 0, 0..2);
 
         drop(render_pass);
 
