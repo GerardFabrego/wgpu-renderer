@@ -1,4 +1,4 @@
-use crate::{camera::Camera, primitives::Cube};
+use crate::primitives::Cube;
 
 mod phong;
 
@@ -11,6 +11,5 @@ pub trait Pass {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         object: &Cube,
-        camera: &Camera,
     );
 }

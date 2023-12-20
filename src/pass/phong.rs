@@ -3,24 +3,16 @@ use std::mem::size_of;
 use crate::{
     camera::{Camera, CameraUniform},
     primitives::Cube,
-    texture::Texture,
 };
 
 pub struct PhongPass {
-    bind_group: wgpu::BindGroup,
+    bind_group_layout: wgpu::BindGroupLayout,
     pipeline: wgpu::RenderPipeline,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
 }
 impl PhongPass {
-    pub(crate) fn new(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        config: &wgpu::SurfaceConfiguration,
-    ) -> PhongPass {
-        let texture_bytes = include_bytes!("../../res/textures/test.png");
-        let texture = Texture::from_bytes(device, queue, texture_bytes);
-
+    pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> PhongPass {
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
@@ -43,24 +35,9 @@ impl PhongPass {
             label: Some("texture_bind_group_layout"),
         });
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&texture.sampler),
-                },
-            ],
-            label: Some("diffuse_bind_group"),
-        });
-
         let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Camera uniform buffer"),
-            size: size_of::<f32>() as u64 * 16,
+            size: size_of::<CameraUniform>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -136,11 +113,20 @@ impl PhongPass {
         });
 
         PhongPass {
-            bind_group,
+            bind_group_layout,
             pipeline,
             camera_buffer,
             camera_bind_group,
         }
+    }
+
+    pub(crate) fn update_camera_buffer(&self, queue: &wgpu::Queue, camera: &Camera) {
+        let camera_uniform = CameraUniform::from(camera);
+        queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[camera_uniform]),
+        );
     }
 }
 
@@ -151,14 +137,21 @@ impl super::Pass for PhongPass {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         object: &crate::primitives::Cube,
-        camera: &Camera,
     ) {
-        let camera_uniform = CameraUniform::from(camera);
-        queue.write_buffer(
-            &self.camera_buffer,
-            0,
-            bytemuck::cast_slice(&[camera_uniform]),
-        );
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&object.texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&object.texture.sampler),
+                },
+            ],
+            label: Some("diffuse_bind_group"),
+        });
 
         let current_texture = surface.get_current_texture().unwrap();
         let view = current_texture
@@ -190,7 +183,7 @@ impl super::Pass for PhongPass {
         });
 
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.set_bind_group(0, &bind_group, &[]);
         render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
         render_pass.set_vertex_buffer(0, object.vertex_buffer.slice(..));
         render_pass.set_index_buffer(object.index_buffer.slice(..), wgpu::IndexFormat::Uint32);

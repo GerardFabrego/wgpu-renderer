@@ -105,7 +105,8 @@ pub async fn run() {
 
     let mut camera = Camera::new(camera_descriptor);
 
-    let mut pass = PhongPass::new(&device, &queue, &config);
+    let mut pass = PhongPass::new(&device, &config);
+    pass.update_camera_buffer(&queue, &camera);
 
     // Event loop
     window.run(|event, window_commands| match event {
@@ -114,26 +115,34 @@ pub async fn run() {
             config.width = width;
             config.height = height;
             surface.configure(&device, &config);
+            pass.update_camera_buffer(&queue, &camera)
         }
         Event::Draw => {
-            pass.draw(&surface, &device, &queue, &object, &camera);
+            pass.draw(&surface, &device, &queue, &object);
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {
-                camera.translate(Vector3::new(-1.0, 0.0, 0.0))
+                camera.translate(Vector3::new(-1.0, 0.0, 0.0));
+                pass.update_camera_buffer(&queue, &camera);
             }
             window::Key::Right | window::Key::Letter('d') => {
-                camera.translate(Vector3::new(1.0, 0.0, 0.0))
+                camera.translate(Vector3::new(1.0, 0.0, 0.0));
+                pass.update_camera_buffer(&queue, &camera);
             }
             window::Key::Up | window::Key::Letter('w') => {
-                camera.translate(Vector3::new(0.0, 1.0, 0.0))
+                camera.translate(Vector3::new(0.0, 1.0, 0.0));
+                pass.update_camera_buffer(&queue, &camera);
             }
             window::Key::Down | window::Key::Letter('s') => {
-                camera.translate(Vector3::new(0.0, -1.0, 0.0))
+                camera.translate(Vector3::new(0.0, -1.0, 0.0));
+                pass.update_camera_buffer(&queue, &camera);
             }
             window::Key::Escape => window_commands.exit(),
             _ => {}
         },
-        Event::MouseMove(y, x) => camera.rotate(y, x),
+        Event::MouseMove(y, x) => {
+            camera.rotate(y, x);
+            pass.update_camera_buffer(&queue, &camera);
+        }
     });
 }
