@@ -1,3 +1,5 @@
+use image::GenericImageView;
+
 pub struct Texture {
     pub texture: wgpu::Texture,
     pub view: wgpu::TextureView,
@@ -5,11 +7,15 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn from_bytes(device: &wgpu::Device, queue: &wgpu::Queue, bytes: &[u8]) -> Self {
+    pub fn from_bytes(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        bytes: &[u8],
+        label: &str,
+    ) -> Self {
         let image = image::load_from_memory(bytes).unwrap();
         let diffuse_rgba = image.to_rgba8();
 
-        use image::GenericImageView;
         let dimensions = image.dimensions();
 
         let texture_size = wgpu::Extent3d {
@@ -18,7 +24,7 @@ impl Texture {
             depth_or_array_layers: 1,
         };
         let texture = device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Texture"),
+            label: Some(label),
             size: texture_size,
             mip_level_count: 1,
             sample_count: 1,

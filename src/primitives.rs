@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use crate::{texture::Texture, vertex::Vertex};
+use crate::{texture::Texture, utils::load_texture, vertex::Vertex};
 
 fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
@@ -57,9 +57,8 @@ pub struct Cube {
 }
 
 impl Cube {
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
-        let texture_bytes = include_bytes!("../res/textures/test.png");
-        let texture = Texture::from_bytes(device, queue, texture_bytes);
+    pub async fn new(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Result<Self> {
+        let texture = load_texture("textures/test.png", device, queue).await?;
 
         let (vertices, indices) = create_cube_data();
 
@@ -81,12 +80,12 @@ impl Cube {
 
         queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
 
-        Self {
+        Ok(Self {
             texture,
             vertex_buffer,
             index_buffer,
             index_count: indices.len(),
-        }
+        })
     }
 
     pub fn desc() -> wgpu::VertexBufferLayout<'static> {

@@ -3,6 +3,7 @@ mod graphics;
 mod pass;
 mod primitives;
 mod texture;
+mod utils;
 mod vertex;
 mod window;
 
@@ -23,7 +24,9 @@ pub async fn run() {
         surface,
     }: GraphicsContext = GraphicsContext::new(&window).await;
 
-    let object = Cube::new(&device, &queue);
+    let object = Cube::new(&device, &queue)
+        .await
+        .expect("Error when creating cube");
 
     let camera_descriptor = CameraDescriptor {
         position: (0.0, 2.0, 4.0).into(),
