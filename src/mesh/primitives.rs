@@ -8,35 +8,35 @@ fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
     let vertices = [
 
-        Vertex {position: [-1.0, -1.0,  1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [ 1.0, -1.0,  1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [ 1.0,  1.0,  1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [-1.0,  1.0,  1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [-1.0, -1.0,  1.0], uv: [0.0, 1.0] },
+        Vertex {position: [ 1.0, -1.0,  1.0], uv: [1.0, 1.0] },
+        Vertex {position: [ 1.0,  1.0,  1.0], uv: [1.0, 0.0] },
+        Vertex {position: [-1.0,  1.0,  1.0], uv: [0.0, 0.0] },
 
-        Vertex {position: [-1.0,  1.0, -1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [ 1.0,  1.0, -1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [ 1.0, -1.0, -1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [-1.0, -1.0, -1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [-1.0,  1.0, -1.0], uv: [0.0, 1.0] },
+        Vertex {position: [ 1.0,  1.0, -1.0], uv: [1.0, 1.0] },
+        Vertex {position: [ 1.0, -1.0, -1.0], uv: [1.0, 0.0] },
+        Vertex {position: [-1.0, -1.0, -1.0], uv: [0.0, 0.0] },
 
-        Vertex {position: [ 1.0, -1.0, -1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [ 1.0,  1.0, -1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [ 1.0,  1.0,  1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [ 1.0, -1.0,  1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [ 1.0, -1.0, -1.0], uv: [0.0, 1.0] },
+        Vertex {position: [ 1.0,  1.0, -1.0], uv: [1.0, 1.0] },
+        Vertex {position: [ 1.0,  1.0,  1.0], uv: [1.0, 0.0] },
+        Vertex {position: [ 1.0, -1.0,  1.0], uv: [0.0, 0.0] },
 
-        Vertex {position: [-1.0, -1.0,  1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [-1.0,  1.0,  1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [-1.0,  1.0, -1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [-1.0, -1.0, -1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [-1.0, -1.0,  1.0], uv: [0.0, 1.0] },
+        Vertex {position: [-1.0,  1.0,  1.0], uv: [1.0, 1.0] },
+        Vertex {position: [-1.0,  1.0, -1.0], uv: [1.0, 0.0] },
+        Vertex {position: [-1.0, -1.0, -1.0], uv: [0.0, 0.0] },
 
-        Vertex {position: [ 1.0,  1.0, -1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [-1.0,  1.0, -1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [-1.0,  1.0,  1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [ 1.0,  1.0,  1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [ 1.0,  1.0, -1.0], uv: [0.0, 1.0] },
+        Vertex {position: [-1.0,  1.0, -1.0], uv: [1.0, 1.0] },
+        Vertex {position: [-1.0,  1.0,  1.0], uv: [1.0, 0.0] },
+        Vertex {position: [ 1.0,  1.0,  1.0], uv: [0.0, 0.0] },
 
-        Vertex {position: [ 1.0, -1.0,  1.0], text_coords: [0.0, 1.0] },
-        Vertex {position: [-1.0, -1.0,  1.0], text_coords: [1.0, 1.0] },
-        Vertex {position: [-1.0, -1.0, -1.0], text_coords: [1.0, 0.0] },
-        Vertex {position: [ 1.0, -1.0, -1.0], text_coords: [0.0, 0.0] },
+        Vertex {position: [ 1.0, -1.0,  1.0], uv: [0.0, 1.0] },
+        Vertex {position: [-1.0, -1.0,  1.0], uv: [1.0, 1.0] },
+        Vertex {position: [-1.0, -1.0, -1.0], uv: [1.0, 0.0] },
+        Vertex {position: [ 1.0, -1.0, -1.0], uv: [0.0, 0.0] },
     ];
 
     let indices = [
