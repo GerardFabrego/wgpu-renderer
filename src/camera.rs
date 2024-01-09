@@ -32,11 +32,15 @@ impl Camera{
         }
     }
 
-    fn get_view_projection_matrix(&self) -> Matrix4<f32> {
+    pub fn get_view_projection_matrix(&self) -> Matrix4<f32> {
         let view_matrix = Matrix4::look_to_rh(self.position, self.direction, Vector3::unit_y());
         let projection_matrix = perspective(Deg(self.fovy), self.aspect, self.znear, self.zfar);
 
         OPENGL_TO_WGPU_MATRIX * projection_matrix * view_matrix
+    }
+
+    pub fn get_position(&self) -> cgmath::Point3<f32> {
+        self.position
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
@@ -84,20 +88,3 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     0.0, 0.0, 0.5, 0.5,
     0.0, 0.0, 0.0, 1.0,
 );
-
-
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
-    view_proj: [[f32; 4]; 4],
-}
-
-
-impl CameraUniform {
-    pub fn from(camera: &Camera) -> Self {
-        Self {
-            view_proj: camera.get_view_projection_matrix().into()
-        }
-    }
-}

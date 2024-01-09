@@ -1,5 +1,6 @@
 use crate::entity::Entity;
 
+mod global_uniforms;
 mod phong;
 
 pub use self::phong::PhongPass;
