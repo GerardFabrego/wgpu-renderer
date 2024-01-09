@@ -1,4 +1,4 @@
-use crate::mesh::Mesh;
+use crate::entity::Entity;
 
 mod phong;
 
@@ -10,6 +10,6 @@ pub trait Pass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        object: &Mesh,
+        entity: &Entity,
     );
 }

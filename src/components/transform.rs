@@ -4,6 +4,16 @@ pub struct Transform {
     pub rotation: cgmath::Quaternion<f32>,
 }
 
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            position: cgmath::Vector3::new(0.0, 0.0, 0.0),
+            scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+            rotation: cgmath::Quaternion::new(0.0, 0.0, 0.0, 0.0),
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformRaw {

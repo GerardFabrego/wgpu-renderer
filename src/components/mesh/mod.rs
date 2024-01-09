@@ -1,17 +1,14 @@
 mod primitives;
-mod transform;
 mod vertex;
 
 use std::mem::size_of;
-
-pub use transform::{Transform, TransformRaw};
 
 use crate::texture::Texture;
 
 use vertex::Vertex;
 
 pub struct Mesh {
-    pub transform: Transform,
+    // pub transform: Transform,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     index_count: usize,

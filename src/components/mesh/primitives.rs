@@ -2,7 +2,7 @@ use std::mem::size_of;
 
 use crate::utils::load_texture;
 
-use super::{vertex::Vertex, Transform};
+use super::vertex::Vertex;
 
 fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
@@ -55,7 +55,7 @@ impl super::Mesh {
     pub async fn create_cube(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        transform: Transform,
+        // transform: Transform,
         texture_path: &str,
     ) -> anyhow::Result<Self> {
         let texture = load_texture(texture_path, device, queue).await?;
@@ -81,7 +81,7 @@ impl super::Mesh {
         queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
 
         Ok(Self {
-            transform,
+            // transform,
             texture,
             vertex_buffer,
             index_buffer,

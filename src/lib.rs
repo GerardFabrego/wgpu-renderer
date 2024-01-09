@@ -1,6 +1,7 @@
 mod camera;
+mod components;
+mod entity;
 mod graphics;
-mod mesh;
 mod pass;
 mod texture;
 mod utils;
@@ -8,10 +9,11 @@ mod window;
 
 use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
+use components::Mesh;
+use entity::Entity;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
 
-use mesh::{Mesh, Transform};
 use window::{Event, Window};
 
 pub async fn run() {
@@ -24,15 +26,23 @@ pub async fn run() {
         surface,
     }: GraphicsContext = GraphicsContext::new(&window).await;
 
-    let transform: Transform = Transform {
-        position: Vector3::new(1.5, 0.0, -10.0),
-        scale: Vector3::new(1.0, 1.0, 1.0),
-        rotation: cgmath::Quaternion::new(0.0, 0.0, 0.0, 0.0),
-    };
+    // let transform: Transform = Transform {
+    //     position: Vector3::new(1.5, 0.0, -10.0),
+    //     scale: Vector3::new(1.0, 1.0, 1.0),
+    //     rotation: cgmath::Quaternion::new(0.0, 0.0, 0.0, 0.0),
+    // };
 
-    let object = Mesh::create_cube(&device, &queue, transform, "textures/test.png")
-        .await
-        .expect("Error when creating cube");
+    // let object = Mesh::create_cube(&device, &queue, "textures/test.png")
+    //     .await
+    //     .expect("Error when creating cube");
+
+    let object = Entity::builder()
+        .mesh(
+            Mesh::create_cube(&device, &queue, "textures/test.png")
+                .await
+                .expect("Error when creating cube"),
+        )
+        .build();
 
     let camera_descriptor = CameraDescriptor {
         position: (0.0, 2.0, 4.0).into(),

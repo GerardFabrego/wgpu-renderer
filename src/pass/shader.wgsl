@@ -9,15 +9,15 @@ struct VertexOutput {
     @location(0) tex_coords: vec2<f32>,
 };
 
-@group(0) @binding(0)
-var<uniform> transform_matrix: mat4x4<f32>;
+// @group(0) @binding(0)
+// var<uniform> transform_matrix: mat4x4<f32>;
 
-@group(1) @binding(0)
+@group(0) @binding(0)
 var tex_view: texture_2d<f32>;
-@group(1) @binding(1)
+@group(0) @binding(1)
 var tex_sampler: sampler;
 
-@group(2) @binding(0)
+@group(1) @binding(0)
 var<uniform> u_camera: mat4x4<f32>;
 
 
@@ -25,7 +25,7 @@ var<uniform> u_camera: mat4x4<f32>;
 fn vs_main(in : VertexInput) -> VertexOutput {
     var out: VertexOutput;
 
-    out.clip_position = u_camera * transform_matrix * vec4<f32>(in.position, 1.0);
+    out.clip_position = u_camera  * vec4<f32>(in.position, 1.0);
     out.tex_coords = in.tex_coords;
     return out;
 }
