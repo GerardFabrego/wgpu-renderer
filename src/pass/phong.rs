@@ -2,7 +2,7 @@ use std::mem::size_of;
 
 use crate::{
     camera::{Camera, CameraUniform},
-    primitives::{Cube, TransformRaw},
+    mesh::{Mesh, TransformRaw},
 };
 
 pub struct PhongPass {
@@ -120,7 +120,7 @@ impl PhongPass {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Cube::desc()],
+                buffers: &[Mesh::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -175,7 +175,7 @@ impl super::Pass for PhongPass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        object: &crate::primitives::Cube,
+        object: &crate::mesh::Mesh,
     ) {
         queue.write_buffer(
             &self.transform_buffer,

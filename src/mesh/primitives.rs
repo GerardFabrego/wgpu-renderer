@@ -1,6 +1,8 @@
 use std::mem::size_of;
 
-use crate::{texture::Texture, utils::load_texture, vertex::Vertex};
+use crate::utils::load_texture;
+
+use super::{vertex::Vertex, Transform};
 
 fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
@@ -49,21 +51,14 @@ fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     (vertices, indices)
 }
 
-pub struct Cube {
-    pub transform: Transform,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    index_count: usize,
-    texture: Texture,
-}
-
-impl Cube {
-    pub async fn new(
+impl super::Mesh {
+    pub async fn create_cube(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         transform: Transform,
+        texture_path: &str,
     ) -> anyhow::Result<Self> {
-        let texture = load_texture("textures/test.png", device, queue).await?;
+        let texture = load_texture(texture_path, device, queue).await?;
 
         let (vertices, indices) = create_cube_data();
 
@@ -92,65 +87,5 @@ impl Cube {
             index_buffer,
             index_count: indices.len(),
         })
-    }
-
-    pub fn get_texture(&self) -> &Texture {
-        &self.texture
-    }
-
-    pub fn get_vertex_buffer(&self) -> &wgpu::Buffer {
-        &self.vertex_buffer
-    }
-
-    pub fn get_index_buffer(&self) -> &wgpu::Buffer {
-        &self.index_buffer
-    }
-    pub fn get_index_count(&self) -> usize {
-        self.index_count
-    }
-    pub fn desc() -> wgpu::VertexBufferLayout<'static> {
-        wgpu::VertexBufferLayout {
-            array_stride: size_of::<Vertex>() as u64,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x3,
-                    offset: 0,
-                    shader_location: 0,
-                },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x2,
-                    offset: 3 * size_of::<f32>() as u64,
-                    shader_location: 1,
-                },
-            ],
-        }
-    }
-}
-
-pub struct Transform {
-    pub position: cgmath::Vector3<f32>,
-    pub scale: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct TransformRaw {
-    m_matrix: [[f32; 4]; 4],
-}
-
-impl TransformRaw {
-    pub fn from(transform: &Transform) -> Self {
-        Self {
-            m_matrix: (cgmath::Matrix4::from_translation(transform.position)
-                * cgmath::Matrix4::from_nonuniform_scale(
-                    transform.scale.x,
-                    transform.scale.y,
-                    transform.scale.z,
-                )
-                * cgmath::Matrix4::from(transform.rotation))
-            .into(),
-        }
     }
 }

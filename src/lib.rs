@@ -1,17 +1,17 @@
 mod camera;
 mod graphics;
+mod mesh;
 mod pass;
-mod primitives;
 mod texture;
 mod utils;
-mod vertex;
 mod window;
 
 use camera::{Camera, CameraDescriptor};
 use cgmath::Vector3;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
-use primitives::{Cube, Transform};
+
+use mesh::{Mesh, Transform};
 use window::{Event, Window};
 
 pub async fn run() {
@@ -30,7 +30,7 @@ pub async fn run() {
         rotation: cgmath::Quaternion::new(0.0, 0.0, 0.0, 0.0),
     };
 
-    let object = Cube::new(&device, &queue, transform)
+    let object = Mesh::create_cube(&device, &queue, transform, "textures/test.png")
         .await
         .expect("Error when creating cube");
 
