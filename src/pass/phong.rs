@@ -3,6 +3,7 @@ use std::{collections::HashMap, mem::size_of};
 use crate::{
     camera::Camera,
     components::{Mesh, TransformRaw},
+    entity::Entity,
     texture::Texture,
 };
 
@@ -177,7 +178,7 @@ impl super::Pass for PhongPass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entities: Vec<&crate::Entity>,
+        entities: &Vec<Entity>,
         camera: &Camera,
     ) {
         queue.write_buffer(

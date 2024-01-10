@@ -79,6 +79,8 @@ pub async fn run() {
         })
         .build();
 
+    let entities = &vec![object, object2, object3, object4];
+
     let mut camera = Camera::new(CameraDescriptor {
         position: (0.0, 2.0, 4.0).into(),
         direction: (0.0, 0.0, -1.0).into(),
@@ -100,13 +102,7 @@ pub async fn run() {
             pass.depth_texture = Texture::create_depth_texture(&device, &config, "depth_texture");
         }
         Event::Draw => {
-            pass.draw(
-                &surface,
-                &device,
-                &queue,
-                vec![&object, &object2, &object3, &object4],
-                &camera,
-            );
+            pass.draw(&surface, &device, &queue, entities, &camera);
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {
