@@ -1,4 +1,4 @@
-use crate::entity::Entity;
+use crate::{camera::Camera, entity::Entity};
 
 mod global_uniforms;
 mod phong;
@@ -12,5 +12,6 @@ pub trait Pass {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         entity: &Entity,
+        camera: &Camera,
     );
 }

@@ -5,7 +5,6 @@ use crate::{camera::Camera, components::Mesh};
 use super::global_uniforms::Globals;
 
 pub struct PhongPass {
-    // global_bind_group_layout: wgpu::BindGroupLayout,
     global_uniform_buffer: wgpu::Buffer,
     global_bind_group: wgpu::BindGroup,
 
@@ -119,19 +118,10 @@ impl PhongPass {
         PhongPass {
             global_uniform_buffer,
             global_bind_group,
-            // global_bind_group_layout,
+
             bind_group_layout,
             pipeline,
         }
-    }
-
-    pub(crate) fn update_global_buffer(&self, queue: &wgpu::Queue, camera: &Camera) {
-        let camera_uniform = Globals::from(camera);
-        queue.write_buffer(
-            &self.global_uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[camera_uniform]),
-        );
     }
 }
 
@@ -142,12 +132,13 @@ impl super::Pass for PhongPass {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         entity: &crate::Entity,
+        camera: &Camera,
     ) {
-        // queue.write_buffer(
-        //     &self.transform_buffer,
-        //     0,
-        //     bytemuck::cast_slice(&[TransformRaw::from(&object.transform)]),
-        // );
+        queue.write_buffer(
+            &self.global_uniform_buffer,
+            0,
+            bytemuck::cast_slice(&[Globals::from(camera)]),
+        );
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.bind_group_layout,
@@ -194,7 +185,6 @@ impl super::Pass for PhongPass {
         });
 
         render_pass.set_pipeline(&self.pipeline);
-        // render_pass.set_bind_group(0, &self.transform_bind_group, &[]);
         render_pass.set_bind_group(0, &self.global_bind_group, &[]);
         render_pass.set_bind_group(1, &bind_group, &[]);
         render_pass.set_vertex_buffer(0, entity.mesh.get_vertex_buffer().slice(..));
