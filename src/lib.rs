@@ -8,8 +8,8 @@ mod utils;
 mod window;
 
 use camera::{Camera, CameraDescriptor};
-use cgmath::{vec3, Vector3};
-use components::{Mesh, Transform};
+use cgmath::Vector3;
+use components::{Mesh, Position, Scale, Transform};
 use entity::Entity;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
@@ -33,8 +33,8 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: vec3(1.0, 0.0, -4.0),
-            scale: vec3(2.0, 0.5, 1.0),
+            position: Position(1.0, 1.0, -2.0),
+            scale: Scale(1.5, 0.75, 1.0),
             ..Default::default()
         })
         .build();

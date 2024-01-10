@@ -3,5 +3,5 @@ mod transform;
 
 pub use self::{
     mesh::Mesh,
-    transform::{Transform, TransformRaw},
+    transform::{Position, Rotation, Scale, Transform, TransformRaw},
 };

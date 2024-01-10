@@ -95,6 +95,7 @@ impl PhongPass {
                 ],
             });
 
+        println!("Local uniform buffer size: {}", local_size);
         let local_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Phong Locals buffer"),
             size: local_size,
