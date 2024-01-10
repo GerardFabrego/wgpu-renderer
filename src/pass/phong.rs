@@ -5,12 +5,12 @@ use crate::{
     components::{Mesh, TransformRaw},
 };
 
-use super::Globals;
+use super::{uniform_pool::UniformPool, Globals};
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct Locals {
-    m_matrix: [[f32; 4]; 4],
+    pub m_matrix: [[f32; 4]; 4],
 }
 
 pub struct PhongPass {
@@ -18,7 +18,7 @@ pub struct PhongPass {
     global_bind_group: wgpu::BindGroup,
 
     local_bind_group_layout: wgpu::BindGroupLayout,
-    local_uniform_buffer: wgpu::Buffer,
+    local_uniforms_pool: UniformPool,
     local_bind_groups: HashMap<usize, wgpu::BindGroup>,
 
     pipeline: wgpu::RenderPipeline,
@@ -95,13 +95,7 @@ impl PhongPass {
                 ],
             });
 
-        println!("Local uniform buffer size: {}", local_size);
-        let local_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("Phong Locals buffer"),
-            size: local_size,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
+        let local_uniforms_pool = UniformPool::new("Local uniforms pool", local_size);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render pipeline layout"),
@@ -154,7 +148,7 @@ impl PhongPass {
             global_bind_group,
 
             local_bind_group_layout,
-            local_uniform_buffer,
+            local_uniforms_pool,
             local_bind_groups: Default::default(),
             pipeline,
         }
@@ -167,7 +161,7 @@ impl super::Pass for PhongPass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entity: &crate::Entity,
+        entities: Vec<&crate::Entity>,
         camera: &Camera,
     ) {
         queue.write_buffer(
@@ -208,44 +202,62 @@ impl super::Pass for PhongPass {
         render_pass.set_pipeline(&self.pipeline);
         render_pass.set_bind_group(0, &self.global_bind_group, &[]);
 
-        queue.write_buffer(
-            &self.local_uniform_buffer,
-            0,
-            bytemuck::cast_slice(&[TransformRaw::from(&entity.transform)]),
-        );
+        if self.local_uniforms_pool.buffers.len() < entities.len() {
+            self.local_uniforms_pool
+                .alloc_buffers(entities.len(), device);
+        }
 
-        self.local_bind_groups.entry(0).or_insert_with(|| {
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("Phong Locals bind group"),
-                layout: &self.local_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: self.local_uniform_buffer.as_entire_binding(),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(
-                            &entity.mesh.get_texture().view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: wgpu::BindingResource::Sampler(
-                            &entity.mesh.get_texture().sampler,
-                        ),
-                    },
-                ],
-            })
-        });
+        for (index, entity) in entities.iter().enumerate() {
+            let local_buffer = &self.local_uniforms_pool.buffers[index];
 
-        render_pass.set_bind_group(1, &self.local_bind_groups[&0], &[]);
-        render_pass.set_vertex_buffer(0, entity.mesh.get_vertex_buffer().slice(..));
-        render_pass.set_index_buffer(
-            entity.mesh.get_index_buffer().slice(..),
-            wgpu::IndexFormat::Uint32,
-        );
-        render_pass.draw_indexed(0..entity.mesh.get_index_count() as u32, 0, 0..2);
+            queue.write_buffer(
+                local_buffer,
+                0,
+                bytemuck::cast_slice(&[Locals {
+                    m_matrix: [
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                }]),
+            );
+
+            self.local_bind_groups.entry(index).or_insert_with(|| {
+                device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("[Phong] Locals"),
+                    layout: &self.local_bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: local_buffer.as_entire_binding(),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::TextureView(
+                                &entity.mesh.get_texture().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: wgpu::BindingResource::Sampler(
+                                &entity.mesh.get_texture().sampler,
+                            ),
+                        },
+                    ],
+                })
+            });
+        }
+
+        for (index, entity) in entities.iter().enumerate() {
+            render_pass.set_bind_group(1, &self.local_bind_groups[&index], &[]);
+            render_pass.set_vertex_buffer(0, entity.mesh.get_vertex_buffer().slice(..));
+            render_pass.set_index_buffer(
+                entity.mesh.get_index_buffer().slice(..),
+                wgpu::IndexFormat::Uint32,
+            );
+            render_pass.draw_indexed(0..entity.mesh.get_index_count() as u32, 0, 0..2);
+        }
 
         drop(render_pass);
 

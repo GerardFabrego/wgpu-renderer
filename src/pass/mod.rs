@@ -1,6 +1,7 @@
 use crate::{camera::Camera, entity::Entity};
 
 mod phong;
+mod uniform_pool;
 
 pub use self::phong::PhongPass;
 
@@ -26,7 +27,7 @@ pub trait Pass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entity: &Entity,
+        entities: Vec<&Entity>,
         camera: &Camera,
     );
 }

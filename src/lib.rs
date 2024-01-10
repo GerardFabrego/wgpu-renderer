@@ -59,7 +59,7 @@ pub async fn run() {
             surface.configure(&device, &config);
         }
         Event::Draw => {
-            pass.draw(&surface, &device, &queue, &object, &camera);
+            pass.draw(&surface, &device, &queue, vec![&object], &camera);
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {
