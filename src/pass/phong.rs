@@ -1,19 +1,29 @@
-use std::mem::size_of;
+use std::{collections::HashMap, mem::size_of};
 
 use crate::{camera::Camera, components::Mesh};
 
 use super::Globals;
 
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct Locals {
+    position: [f32; 4],
+}
+
 pub struct PhongPass {
     global_uniform_buffer: wgpu::Buffer,
     global_bind_group: wgpu::BindGroup,
 
-    bind_group_layout: wgpu::BindGroupLayout,
+    local_bind_group_layout: wgpu::BindGroupLayout,
+    local_uniform_buffer: wgpu::Buffer,
+    local_bind_groups: HashMap<usize, wgpu::BindGroup>,
+
     pipeline: wgpu::RenderPipeline,
 }
 
 impl PhongPass {
     pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> PhongPass {
+        // GLOBAL UNIFORMS
         let global_size = size_of::<Globals>() as wgpu::BufferAddress;
 
         let global_bind_group_layout =
@@ -47,31 +57,53 @@ impl PhongPass {
             }],
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        multisampled: false,
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+        // LOCAL UNIFORMS
+        let local_size = size_of::<Locals>() as wgpu::BufferAddress;
+        let local_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("[Phong] Locals"),
+                entries: &[
+                    // Local uniforms
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: wgpu::BufferSize::new(local_size),
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-            label: Some("texture_bind_group_layout"),
+                    // Mesh texture
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
+
+        let local_uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Phong Locals buffer"),
+            size: local_size,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
         });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render pipeline layout"),
-            bind_group_layouts: &[&global_bind_group_layout, &bind_group_layout],
+            bind_group_layouts: &[&global_bind_group_layout, &local_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -119,7 +151,9 @@ impl PhongPass {
             global_uniform_buffer,
             global_bind_group,
 
-            bind_group_layout,
+            local_bind_group_layout,
+            local_uniform_buffer,
+            local_bind_groups: Default::default(),
             pipeline,
         }
     }
@@ -139,21 +173,6 @@ impl super::Pass for PhongPass {
             0,
             bytemuck::cast_slice(&[Globals::from(camera)]),
         );
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &self.bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&entity.mesh.get_texture().view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&entity.mesh.get_texture().sampler),
-                },
-            ],
-            label: Some("diffuse_bind_group"),
-        });
 
         let current_texture = surface.get_current_texture().unwrap();
         let view = current_texture
@@ -186,7 +205,33 @@ impl super::Pass for PhongPass {
 
         render_pass.set_pipeline(&self.pipeline);
         render_pass.set_bind_group(0, &self.global_bind_group, &[]);
-        render_pass.set_bind_group(1, &bind_group, &[]);
+
+        self.local_bind_groups.entry(0).or_insert_with(|| {
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("[Phong] Locals"),
+                layout: &self.local_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: self.local_uniform_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(
+                            &entity.mesh.get_texture().view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(
+                            &entity.mesh.get_texture().sampler,
+                        ),
+                    },
+                ],
+            })
+        });
+
+        render_pass.set_bind_group(1, &self.local_bind_groups[&0], &[]);
         render_pass.set_vertex_buffer(0, entity.mesh.get_vertex_buffer().slice(..));
         render_pass.set_index_buffer(
             entity.mesh.get_index_buffer().slice(..),
