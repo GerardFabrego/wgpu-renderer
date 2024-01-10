@@ -33,8 +33,47 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: Position(1.0, 1.0, -2.0),
-            scale: Scale(1.5, 0.75, 1.0),
+            position: Position(1.0, 0.0, -2.0),
+            scale: Scale(1.0, 1.0, 1.0),
+            ..Default::default()
+        })
+        .build();
+
+    let object2 = Entity::builder()
+        .mesh(
+            Mesh::create_cube(&device, &queue, "textures/test.png")
+                .await
+                .expect("Error when creating cube"),
+        )
+        .transform(Transform {
+            position: Position(-1.0, 0.0, -2.0),
+            scale: Scale(1.0, 1.0, 1.0),
+            ..Default::default()
+        })
+        .build();
+
+    let object3 = Entity::builder()
+        .mesh(
+            Mesh::create_cube(&device, &queue, "textures/test.png")
+                .await
+                .expect("Error when creating cube"),
+        )
+        .transform(Transform {
+            position: Position(-1.0, 0.0, -4.0),
+            scale: Scale(1.0, 1.0, 1.0),
+            ..Default::default()
+        })
+        .build();
+
+    let object4 = Entity::builder()
+        .mesh(
+            Mesh::create_cube(&device, &queue, "textures/test.png")
+                .await
+                .expect("Error when creating cube"),
+        )
+        .transform(Transform {
+            position: Position(1.0, 0.0, -4.0),
+            scale: Scale(1.0, 1.0, 1.0),
             ..Default::default()
         })
         .build();
@@ -59,7 +98,13 @@ pub async fn run() {
             surface.configure(&device, &config);
         }
         Event::Draw => {
-            pass.draw(&surface, &device, &queue, vec![&object], &camera);
+            pass.draw(
+                &surface,
+                &device,
+                &queue,
+                vec![&object, &object2, &object3, &object4],
+                &camera,
+            );
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {

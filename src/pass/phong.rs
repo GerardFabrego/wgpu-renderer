@@ -214,12 +214,7 @@ impl super::Pass for PhongPass {
                 local_buffer,
                 0,
                 bytemuck::cast_slice(&[Locals {
-                    m_matrix: [
-                        [1.0, 0.0, 0.0, 0.0],
-                        [0.0, 1.0, 0.0, 0.0],
-                        [0.0, 0.0, 1.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0],
-                    ],
+                    m_matrix: TransformRaw::from(&entity.transform).m_matrix,
                 }]),
             );
 

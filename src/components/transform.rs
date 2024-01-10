@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Position(pub f32, pub f32, pub f32);
 
 impl Default for Position {
@@ -54,7 +54,7 @@ pub struct Transform {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TransformRaw {
-    m_matrix: [[f32; 4]; 4],
+    pub m_matrix: [[f32; 4]; 4],
 }
 
 impl TransformRaw {
