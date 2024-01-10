@@ -48,7 +48,7 @@ impl GraphicsContext {
             .find(|f| f.is_srgb())
             .unwrap_or(surface_capabilities.formats[0]);
 
-        let (width, height) = window.inner_size();
+        let (height, width) = window.inner_size();
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,

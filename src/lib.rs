@@ -14,6 +14,7 @@ use entity::Entity;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
 
+use texture::Texture;
 use window::{Event, Window};
 
 pub async fn run() {
@@ -96,6 +97,7 @@ pub async fn run() {
             config.width = width;
             config.height = height;
             surface.configure(&device, &config);
+            pass.depth_texture = Texture::create_depth_texture(&device, &config, "depth_texture");
         }
         Event::Draw => {
             pass.draw(
