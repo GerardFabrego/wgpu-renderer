@@ -1,13 +1,16 @@
 use std::{collections::HashMap, mem::size_of};
 
-use crate::{camera::Camera, components::Mesh};
+use crate::{
+    camera::Camera,
+    components::{Mesh, TransformRaw},
+};
 
 use super::Globals;
 
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct Locals {
-    position: [f32; 4],
+    m_matrix: [[f32; 4]; 4],
 }
 
 pub struct PhongPass {
@@ -63,7 +66,6 @@ impl PhongPass {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("[Phong] Locals"),
                 entries: &[
-                    // Local uniforms
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
                         visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
@@ -74,9 +76,8 @@ impl PhongPass {
                         },
                         count: None,
                     },
-                    // Mesh texture
                     wgpu::BindGroupLayoutEntry {
-                        binding: 0,
+                        binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
@@ -86,7 +87,7 @@ impl PhongPass {
                         count: None,
                     },
                     wgpu::BindGroupLayoutEntry {
-                        binding: 1,
+                        binding: 2,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
@@ -206,9 +207,15 @@ impl super::Pass for PhongPass {
         render_pass.set_pipeline(&self.pipeline);
         render_pass.set_bind_group(0, &self.global_bind_group, &[]);
 
+        queue.write_buffer(
+            &self.local_uniform_buffer,
+            0,
+            bytemuck::cast_slice(&[TransformRaw::from(&entity.transform)]),
+        );
+
         self.local_bind_groups.entry(0).or_insert_with(|| {
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("[Phong] Locals"),
+                label: Some("Phong Locals bind group"),
                 layout: &self.local_bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
@@ -216,13 +223,13 @@ impl super::Pass for PhongPass {
                         resource: self.local_uniform_buffer.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 0,
+                        binding: 1,
                         resource: wgpu::BindingResource::TextureView(
                             &entity.mesh.get_texture().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 1,
+                        binding: 2,
                         resource: wgpu::BindingResource::Sampler(
                             &entity.mesh.get_texture().sampler,
                         ),

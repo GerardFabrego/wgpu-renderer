@@ -17,19 +17,24 @@ struct Globals {
 @group(0) @binding(0)
 var<uniform> globals: Globals;
 
+struct Locals {
+    m_matrix: mat4x4<f32>
+}
 
 @group(1) @binding(0)
-var tex_view: texture_2d<f32>;
-@group(1) @binding(1)
-var tex_sampler: sampler;
+var<uniform> locals: Locals;
 
+@group(1) @binding(1)
+var tex_view: texture_2d<f32>;
+@group(1) @binding(2)
+var tex_sampler: sampler;
 
 
 @vertex
 fn vs_main(in : VertexInput) -> VertexOutput {
     var out: VertexOutput;
 
-    out.clip_position = globals.view_proj  * vec4<f32>(in.position, 1.0);
+    out.clip_position = globals.view_proj  * locals.m_matrix * vec4<f32>(in.position, 1.0);
     out.tex_coords = in.tex_coords;
     return out;
 }

@@ -2,7 +2,7 @@ use crate::components::{Mesh, Transform};
 
 pub struct Entity {
     pub mesh: Mesh,
-    transform: Transform,
+    pub transform: Transform,
 }
 
 impl Entity {
