@@ -59,6 +59,7 @@ impl Window {
                                 WinitKeyCode::ArrowDown => Key::Down,
                                 WinitKeyCode::Space => Key::Space,
                                 WinitKeyCode::Escape => Key::Escape,
+                                WinitKeyCode::ControlLeft => Key::Control,
                                 code if code >= WinitKeyCode::Digit0
                                     && code <= WinitKeyCode::Digit9 =>
                                 {

@@ -34,7 +34,7 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: Position(1.0, 0.0, -2.0),
+            position: Position(1.1, 0.0, -1.9),
             scale: Scale(1.0, 1.0, 1.0),
             ..Default::default()
         })
@@ -47,7 +47,7 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: Position(-1.0, 0.0, -2.0),
+            position: Position(-1.1, 0.0, -1.9),
             scale: Scale(1.0, 1.0, 1.0),
             ..Default::default()
         })
@@ -60,7 +60,7 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: Position(-1.0, 0.0, -4.0),
+            position: Position(-1.1, 0.0, -4.1),
             scale: Scale(1.0, 1.0, 1.0),
             ..Default::default()
         })
@@ -73,7 +73,7 @@ pub async fn run() {
                 .expect("Error when creating cube"),
         )
         .transform(Transform {
-            position: Position(1.0, 0.0, -4.0),
+            position: Position(1.1, 0.0, -4.1),
             scale: Scale(1.0, 1.0, 1.0),
             ..Default::default()
         })
@@ -112,9 +112,15 @@ pub async fn run() {
                 camera.translate(Vector3::new(1.0, 0.0, 0.0));
             }
             window::Key::Up | window::Key::Letter('w') => {
-                camera.translate(Vector3::new(0.0, 1.0, 0.0));
+                camera.translate(Vector3::new(0.0, 0.0, -1.0));
             }
             window::Key::Down | window::Key::Letter('s') => {
+                camera.translate(Vector3::new(0.0, 0.0, 1.0));
+            }
+            window::Key::Space => {
+                camera.translate(Vector3::new(0.0, 1.0, 0.0));
+            }
+            window::Key::Control => {
                 camera.translate(Vector3::new(0.0, -1.0, 0.0));
             }
             window::Key::Escape => window_commands.exit(),
