@@ -2,7 +2,7 @@ use std::mem::size_of;
 
 use crate::{camera::Camera, components::Mesh};
 
-use super::global_uniforms::Globals;
+use super::Globals;
 
 pub struct PhongPass {
     global_uniform_buffer: wgpu::Buffer,
