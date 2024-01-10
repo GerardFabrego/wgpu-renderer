@@ -51,14 +51,10 @@ pub struct Transform {
     pub rotation: Rotation,
 }
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct TransformRaw {
-    pub m_matrix: [[f32; 4]; 4],
-}
+pub type TransformRaw = [[f32; 4]; 4];
 
-impl TransformRaw {
-    pub fn from(transform: &Transform) -> Self {
+impl From<&Transform> for TransformRaw {
+    fn from(transform: &Transform) -> Self {
         let translation_matrix =
             cgmath::Matrix4::from_translation(cgmath::Vector3::from(&transform.position));
 
@@ -70,8 +66,6 @@ impl TransformRaw {
 
         let rotation_matrix = cgmath::Matrix4::from(cgmath::Quaternion::from(&transform.rotation));
 
-        Self {
-            m_matrix: (translation_matrix * scale_matrix * rotation_matrix).into(),
-        }
+        (translation_matrix * scale_matrix * rotation_matrix).into()
     }
 }

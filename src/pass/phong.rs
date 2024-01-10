@@ -12,7 +12,7 @@ use super::{uniform_pool::UniformPool, Globals};
 #[repr(C)]
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct Locals {
-    pub m_matrix: [[f32; 4]; 4],
+    pub m_matrix: TransformRaw,
 }
 
 pub struct PhongPass {
@@ -238,7 +238,7 @@ impl super::Pass for PhongPass {
                 local_buffer,
                 0,
                 bytemuck::cast_slice(&[Locals {
-                    m_matrix: TransformRaw::from(&entity.transform).m_matrix,
+                    m_matrix: TransformRaw::from(&entity.transform),
                 }]),
             );
 
