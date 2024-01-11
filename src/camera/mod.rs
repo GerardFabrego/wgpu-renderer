@@ -5,8 +5,6 @@ mod camera_controller;
 pub use self::camera_controller::CameraController;
 
 pub struct CameraDescriptor {
-    pub position: Point3<f32>,
-    pub direction: Vector3<f32>,
     pub aspect: f32,
     pub fovy: f32,
     pub znear: f32,
@@ -15,7 +13,6 @@ pub struct CameraDescriptor {
 
 pub struct Camera {
     position: Point3<f32>,
-    // direction: Vector3<f32>,
     pitch: Rad<f32>,
     yaw: Rad<f32>,
     aspect: f32,
@@ -25,11 +22,16 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(descriptor: CameraDescriptor) -> Self {
+    pub fn new<V: Into<Point3<f32>>, Y: Into<Rad<f32>>, P: Into<Rad<f32>>>(
+        position: V,
+        yaw: Y,
+        pitch: P,
+        descriptor: CameraDescriptor,
+    ) -> Self {
         Self {
-            position: descriptor.position,
-            pitch: Rad(0.0),
-            yaw: Deg(-90.0).into(),
+            position: position.into(),
+            pitch: pitch.into(),
+            yaw: yaw.into(),
             aspect: descriptor.aspect,
             fovy: descriptor.fovy,
             znear: descriptor.znear,

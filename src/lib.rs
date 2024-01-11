@@ -8,6 +8,7 @@ mod utils;
 mod window;
 
 use camera::{Camera, CameraController, CameraDescriptor};
+use cgmath::Deg;
 use components::{Mesh, Position, Scale, Transform};
 use entity::Entity;
 use graphics::GraphicsContext;
@@ -80,14 +81,17 @@ pub async fn run() {
 
     let entities = &vec![object, object2, object3, object4];
 
-    let mut camera = Camera::new(CameraDescriptor {
-        position: (0.0, 2.0, 4.0).into(),
-        direction: (0.0, 0.0, -1.0).into(),
-        aspect: config.width as f32 / config.height as f32,
-        fovy: 45.0,
-        znear: 0.1,
-        zfar: 100.0,
-    });
+    let mut camera = Camera::new(
+        (0.0, 2.0, 4.0),
+        Deg(-90.0),
+        Deg(0.0),
+        CameraDescriptor {
+            aspect: config.width as f32 / config.height as f32,
+            fovy: 45.0,
+            znear: 0.1,
+            zfar: 100.0,
+        },
+    );
 
     let camera_controller = CameraController {
         speed: 1.0,
