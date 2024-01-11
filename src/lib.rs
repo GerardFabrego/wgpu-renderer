@@ -7,8 +7,7 @@ mod texture;
 mod utils;
 mod window;
 
-use camera::{Camera, CameraDescriptor};
-use cgmath::Vector3;
+use camera::{Camera, CameraController, CameraDescriptor};
 use components::{Mesh, Position, Scale, Transform};
 use entity::Entity;
 use graphics::GraphicsContext;
@@ -90,6 +89,11 @@ pub async fn run() {
         zfar: 100.0,
     });
 
+    let camera_controller = CameraController {
+        speed: 1.0,
+        rotation_speed: 0.01,
+    };
+
     let mut pass = PhongPass::new(&device, &config);
 
     // Event loop
@@ -106,28 +110,30 @@ pub async fn run() {
         }
         Event::KeyboardInput(key) => match key {
             window::Key::Left | window::Key::Letter('a') => {
-                camera.translate(Vector3::new(-1.0, 0.0, 0.0));
+                camera_controller.move_left(&mut camera);
             }
             window::Key::Right | window::Key::Letter('d') => {
-                camera.translate(Vector3::new(1.0, 0.0, 0.0));
+                camera_controller.move_right(&mut camera);
             }
             window::Key::Up | window::Key::Letter('w') => {
-                camera.translate(Vector3::new(0.0, 0.0, -1.0));
+                camera_controller.move_forward(&mut camera)
             }
             window::Key::Down | window::Key::Letter('s') => {
-                camera.translate(Vector3::new(0.0, 0.0, 1.0));
+                camera_controller.move_backwards(&mut camera);
             }
             window::Key::Space => {
-                camera.translate(Vector3::new(0.0, 1.0, 0.0));
+                camera_controller.move_up(&mut camera);
             }
-            window::Key::Control => {
-                camera.translate(Vector3::new(0.0, -1.0, 0.0));
+            window::Key::ShiftLeft => {
+                camera_controller.move_down(&mut camera);
             }
             window::Key::Escape => window_commands.exit(),
             _ => {}
         },
-        Event::MouseMove(y, x) => {
-            camera.rotate(y, x);
+        Event::MouseMove(x, y) => {
+            let yaw = x;
+            let pitch = -y;
+            camera_controller.rotate(&mut camera, (yaw, pitch));
         }
     });
 }

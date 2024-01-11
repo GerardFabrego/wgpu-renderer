@@ -15,6 +15,6 @@ pub enum Key {
     Left,
     Right,
     Space,
-    Control,
+    ShiftLeft,
     Other,
 }
