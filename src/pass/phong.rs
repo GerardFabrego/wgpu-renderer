@@ -102,7 +102,7 @@ impl PhongPass {
         let local_uniforms_pool = UniformPool::new("Local uniforms pool", local_size);
 
         // DEPTH TEXTURE
-        let depth_texture = Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture = Texture::create_depth_texture(device, config, "depth_texture");
 
         // PIPELINE
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
