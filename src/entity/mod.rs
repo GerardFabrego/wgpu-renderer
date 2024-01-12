@@ -1,7 +1,7 @@
-use crate::components::{Mesh, Transform};
+use crate::components::{Mesh, Model, Transform};
 
 pub struct Entity {
-    pub mesh: Mesh,
+    pub model: Model,
     pub transform: Transform,
 }
 
@@ -12,20 +12,20 @@ impl Entity {
 }
 
 pub struct EntityBuilder {
-    mesh: Option<Mesh>,
+    model: Option<Model>,
     transform: Transform,
 }
 
 impl EntityBuilder {
     pub fn new() -> Self {
         Self {
-            mesh: None,
+            model: None,
             transform: Transform::default(),
         }
     }
 
-    pub fn mesh(mut self, mesh: Mesh) -> Self {
-        self.mesh = Some(mesh);
+    pub fn model(mut self, model: Model) -> Self {
+        self.model = Some(model);
         self
     }
 
@@ -36,7 +36,7 @@ impl EntityBuilder {
 
     pub fn build(self) -> Entity {
         Entity {
-            mesh: self.mesh.expect("Missing mesh when creating entity"),
+            model: self.model.expect("Missing model when creating entity"),
             transform: self.transform,
         }
     }

@@ -231,51 +231,56 @@ impl super::Pass for PhongPass {
                 .alloc_buffers(entities.len(), device);
         }
 
-        for (index, entity) in entities.iter().enumerate() {
-            let local_buffer = &self.local_uniforms_pool.buffers[index];
+        let mut index = 0;
+        for Entity { model, transform } in entities {
+            for mesh in &model.meshes {
+                let local_buffer = &self.local_uniforms_pool.buffers[index];
 
-            queue.write_buffer(
-                local_buffer,
-                0,
-                bytemuck::cast_slice(&[Locals {
-                    m_matrix: TransformRaw::from(&entity.transform),
-                }]),
-            );
+                queue.write_buffer(
+                    local_buffer,
+                    0,
+                    bytemuck::cast_slice(&[Locals {
+                        m_matrix: TransformRaw::from(transform),
+                    }]),
+                );
 
-            self.local_bind_groups.entry(index).or_insert_with(|| {
-                device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("[Phong] Locals"),
-                    layout: &self.local_bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: local_buffer.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: wgpu::BindingResource::TextureView(
-                                &entity.mesh.get_texture().view,
-                            ),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 2,
-                            resource: wgpu::BindingResource::Sampler(
-                                &entity.mesh.get_texture().sampler,
-                            ),
-                        },
-                    ],
-                })
-            });
+                self.local_bind_groups.entry(index).or_insert_with(|| {
+                    let texture = &model.materials[mesh.material].texture;
+
+                    device.create_bind_group(&wgpu::BindGroupDescriptor {
+                        label: Some("[Phong] Locals"),
+                        layout: &self.local_bind_group_layout,
+                        entries: &[
+                            wgpu::BindGroupEntry {
+                                binding: 0,
+                                resource: local_buffer.as_entire_binding(),
+                            },
+                            wgpu::BindGroupEntry {
+                                binding: 1,
+                                resource: wgpu::BindingResource::TextureView(&texture.view),
+                            },
+                            wgpu::BindGroupEntry {
+                                binding: 2,
+                                resource: wgpu::BindingResource::Sampler(&texture.sampler),
+                            },
+                        ],
+                    })
+                });
+
+                index += 1;
+            }
         }
 
-        for (index, entity) in entities.iter().enumerate() {
-            render_pass.set_bind_group(1, &self.local_bind_groups[&index], &[]);
-            render_pass.set_vertex_buffer(0, entity.mesh.get_vertex_buffer().slice(..));
-            render_pass.set_index_buffer(
-                entity.mesh.get_index_buffer().slice(..),
-                wgpu::IndexFormat::Uint32,
-            );
-            render_pass.draw_indexed(0..entity.mesh.get_index_count() as u32, 0, 0..2);
+        let mut index = 0;
+        for entity in entities {
+            for mesh in &entity.model.meshes {
+                render_pass.set_bind_group(1, &self.local_bind_groups[&index], &[]);
+                render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
+                render_pass
+                    .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..mesh.get_index_count() as u32, 0, 0..2);
+                index += 1;
+            }
         }
 
         drop(render_pass);

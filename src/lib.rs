@@ -15,6 +15,7 @@ use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
 
 use texture::Texture;
+use utils::load_model;
 use window::{Event, Window};
 
 pub async fn run() {
@@ -27,51 +28,60 @@ pub async fn run() {
         surface,
     }: GraphicsContext = GraphicsContext::new(&window).await;
 
-    let object = Entity::builder()
-        .mesh(
-            Mesh::create_cube(&device, &queue, "textures/test.png")
-                .await
-                .expect("Error when creating cube"),
-        )
-        .transform(Transform {
-            position: Position(1.1, 0.0, -1.9),
-            scale: Scale(1.0, 1.0, 1.0),
-            ..Default::default()
-        })
-        .build();
+    // let object = Entity::builder()
+    //     .mesh(
+    //         Mesh::create_cube(&device, &queue, "textures/test.png")
+    //             .await
+    //             .expect("Error when creating cube"),
+    //     )
+    //     .transform(Transform {
+    //         position: Position(1.1, 0.0, -1.9),
+    //         scale: Scale(1.0, 1.0, 1.0),
+    //         ..Default::default()
+    //     })
+    //     .build();
 
-    let object2 = Entity::builder()
-        .mesh(
-            Mesh::create_cube(&device, &queue, "textures/test.png")
-                .await
-                .expect("Error when creating cube"),
-        )
-        .transform(Transform {
-            position: Position(-1.1, 0.0, -1.9),
-            scale: Scale(1.0, 1.0, 1.0),
-            ..Default::default()
-        })
-        .build();
+    // let object2 = Entity::builder()
+    //     .mesh(
+    //         Mesh::create_cube(&device, &queue, "textures/test.png")
+    //             .await
+    //             .expect("Error when creating cube"),
+    //     )
+    //     .transform(Transform {
+    //         position: Position(-1.1, 0.0, -1.9),
+    //         scale: Scale(1.0, 1.0, 1.0),
+    //         ..Default::default()
+    //     })
+    //     .build();
 
-    let object3 = Entity::builder()
-        .mesh(
-            Mesh::create_cube(&device, &queue, "textures/test.png")
-                .await
-                .expect("Error when creating cube"),
-        )
-        .transform(Transform {
-            position: Position(-1.1, 0.0, -4.1),
-            scale: Scale(1.0, 1.0, 1.0),
-            ..Default::default()
-        })
-        .build();
+    // let object3 = Entity::builder()
+    //     .mesh(
+    //         Mesh::create_cube(&device, &queue, "textures/test.png")
+    //             .await
+    //             .expect("Error when creating cube"),
+    //     )
+    //     .transform(Transform {
+    //         position: Position(-1.1, 0.0, -4.1),
+    //         scale: Scale(1.0, 1.0, 1.0),
+    //         ..Default::default()
+    //     })
+    //     .build();
 
-    let object4 = Entity::builder()
-        .mesh(
-            Mesh::create_cube(&device, &queue, "textures/test.png")
-                .await
-                .expect("Error when creating cube"),
-        )
+    // let object4 = Entity::builder()
+    //     .mesh(
+    //         Mesh::create_cube(&device, &queue, "textures/test.png")
+    //             .await
+    //             .expect("Error when creating cube"),
+    //     )
+    //     .transform(Transform {
+    //         position: Position(1.1, 0.0, -4.1),
+    //         scale: Scale(1.0, 1.0, 1.0),
+    //         ..Default::default()
+    //     })
+    //     .build();
+
+    let cube = Entity::builder()
+        .model(load_model("cube.obj", &device, &queue).unwrap())
         .transform(Transform {
             position: Position(1.1, 0.0, -4.1),
             scale: Scale(1.0, 1.0, 1.0),
@@ -79,7 +89,7 @@ pub async fn run() {
         })
         .build();
 
-    let entities = &vec![object, object2, object3, object4];
+    let entities = &vec![cube];
 
     let mut camera = Camera::new(
         (0.0, 2.0, 4.0),

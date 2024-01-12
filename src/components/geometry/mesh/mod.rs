@@ -1,20 +1,14 @@
 mod primitives;
 
-use crate::texture::Texture;
-
 pub struct Mesh {
-    // pub name: String,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    index_count: usize,
-    texture: Texture,
+    pub name: String,
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
+    pub index_count: usize,
+    pub material: usize,
 }
 
 impl Mesh {
-    pub fn get_texture(&self) -> &Texture {
-        &self.texture
-    }
-
     pub fn get_vertex_buffer(&self) -> &wgpu::Buffer {
         &self.vertex_buffer
     }
