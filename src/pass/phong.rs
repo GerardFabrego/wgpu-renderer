@@ -2,7 +2,7 @@ use std::{collections::HashMap, mem::size_of};
 
 use crate::{
     camera::Camera,
-    components::{Mesh, TransformRaw},
+    components::{TransformRaw, Vertex},
     entity::Entity,
     texture::Texture,
 };
@@ -122,7 +122,7 @@ impl PhongPass {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[Mesh::desc()],
+                buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
