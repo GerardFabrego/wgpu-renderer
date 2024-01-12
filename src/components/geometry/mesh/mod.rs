@@ -1,11 +1,9 @@
 mod primitives;
-mod vertex;
 
 use crate::texture::Texture;
 
-pub use self::vertex::Vertex;
-
 pub struct Mesh {
+    // pub name: String,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     index_count: usize,

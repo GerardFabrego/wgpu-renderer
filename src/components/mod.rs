@@ -1,7 +1,8 @@
-mod mesh;
+mod geometry;
+mod model;
 mod transform;
 
 pub use self::{
-    mesh::{Mesh, Vertex},
+    geometry::{Mesh, Vertex},
     transform::{Position, Rotation, Scale, Transform, TransformRaw},
 };
