@@ -226,6 +226,7 @@ impl super::Pass for PhongPass {
         render_pass.set_pipeline(&self.pipeline);
         render_pass.set_bind_group(0, &self.global_bind_group, &[]);
 
+        // IMPORTANT! Currently it only works with models that only has one mesh
         if self.local_uniforms_pool.buffers.len() < entities.len() {
             self.local_uniforms_pool
                 .alloc_buffers(entities.len(), device);
