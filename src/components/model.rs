@@ -22,7 +22,10 @@ impl Model {
             texture,
         }];
 
-        let meshes = vec![(Mesh::create_cube(device, queue)?, 0)];
+        #[rustfmt::skip]
+        let meshes = vec![
+            (Mesh::create_cube(device, queue)?, 0)
+        ];
 
         Ok(Self { meshes, materials })
     }

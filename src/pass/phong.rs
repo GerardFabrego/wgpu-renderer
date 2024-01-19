@@ -234,7 +234,7 @@ impl super::Pass for PhongPass {
 
         let mut index = 0;
         for Entity { model, transform } in entities {
-            for (mesh, material_index) in &model.meshes {
+            for (_, material_index) in &model.meshes {
                 let local_buffer = &self.local_uniforms_pool.buffers[index];
 
                 queue.write_buffer(
@@ -276,10 +276,10 @@ impl super::Pass for PhongPass {
         for entity in entities {
             for (mesh, _) in &entity.model.meshes {
                 render_pass.set_bind_group(1, &self.local_bind_groups[&index], &[]);
-                render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
+                render_pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
                 render_pass
-                    .set_index_buffer(mesh.get_index_buffer().slice(..), wgpu::IndexFormat::Uint32);
-                render_pass.draw_indexed(0..mesh.get_index_count() as u32, 0, 0..2);
+                    .set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                render_pass.draw_indexed(0..mesh.index_count as u32, 0, 0..2);
                 index += 1;
             }
         }

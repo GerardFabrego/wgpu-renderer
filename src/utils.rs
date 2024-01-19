@@ -109,7 +109,7 @@ pub fn load_model(
 
             let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(&format!("{:?} Index Buffer", file_name)),
-                size: (size_of::<u32>() * &m.mesh.indices.len()) as u64,
+                size: (size_of::<u32>() * m.mesh.indices.len()) as u64,
                 usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             });
