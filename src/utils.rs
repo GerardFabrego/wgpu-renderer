@@ -39,7 +39,6 @@ pub fn load_model(
     file_name: &str,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
-    // layout: &wgpu::BindGroupLayout,
 ) -> anyhow::Result<Model> {
     let obj_text = load_string(file_name)?;
     let obj_cursor = Cursor::new(obj_text);
@@ -61,25 +60,10 @@ pub fn load_model(
     let mut materials = Vec::new();
     for m in obj_materials? {
         let texture = load_texture(&m.diffuse_texture.unwrap(), device, queue)?;
-        // let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        //     layout,
-        //     entries: &[
-        //         wgpu::BindGroupEntry {
-        //             binding: 0,
-        //             resource: wgpu::BindingResource::TextureView(&texture.view),
-        //         },
-        //         wgpu::BindGroupEntry {
-        //             binding: 1,
-        //             resource: wgpu::BindingResource::Sampler(&texture.sampler),
-        //         },
-        //     ],
-        //     label: None,
-        // });
 
         materials.push(Material {
             name: m.name,
             texture,
-            // bind_group,
         })
     }
 
