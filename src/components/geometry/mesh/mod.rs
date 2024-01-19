@@ -5,7 +5,6 @@ pub struct Mesh {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub index_count: usize,
-    pub material: usize,
 }
 
 impl Mesh {

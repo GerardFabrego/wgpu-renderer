@@ -116,13 +116,15 @@ pub fn load_model(
 
             queue.write_buffer(&index_buffer, 0, bytemuck::cast_slice(&m.mesh.indices));
 
-            Mesh {
-                name: file_name.to_string(),
-                vertex_buffer,
-                index_buffer,
-                index_count: m.mesh.indices.len(),
-                material: m.mesh.material_id.unwrap_or(0),
-            }
+            (
+                Mesh {
+                    name: file_name.to_string(),
+                    vertex_buffer,
+                    index_buffer,
+                    index_count: m.mesh.indices.len(),
+                },
+                m.mesh.material_id.unwrap_or(0),
+            )
         })
         .collect::<Vec<_>>();
 

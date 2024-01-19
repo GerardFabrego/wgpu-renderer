@@ -234,7 +234,7 @@ impl super::Pass for PhongPass {
 
         let mut index = 0;
         for Entity { model, transform } in entities {
-            for mesh in &model.meshes {
+            for (mesh, material_index) in &model.meshes {
                 let local_buffer = &self.local_uniforms_pool.buffers[index];
 
                 queue.write_buffer(
@@ -246,7 +246,7 @@ impl super::Pass for PhongPass {
                 );
 
                 self.local_bind_groups.entry(index).or_insert_with(|| {
-                    let texture = &model.materials[mesh.material].texture;
+                    let texture = &model.materials[*material_index].texture;
 
                     device.create_bind_group(&wgpu::BindGroupDescriptor {
                         label: Some("[Phong] Locals"),
@@ -274,7 +274,7 @@ impl super::Pass for PhongPass {
 
         let mut index = 0;
         for entity in entities {
-            for mesh in &entity.model.meshes {
+            for (mesh, _) in &entity.model.meshes {
                 render_pass.set_bind_group(1, &self.local_bind_groups[&index], &[]);
                 render_pass.set_vertex_buffer(0, mesh.get_vertex_buffer().slice(..));
                 render_pass

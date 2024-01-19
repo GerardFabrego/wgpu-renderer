@@ -1,6 +1,6 @@
 use std::mem::size_of;
 
-use crate::components::{Material, Vertex};
+use crate::components::Vertex;
 
 fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
     #[rustfmt::skip]
@@ -50,11 +50,7 @@ fn create_cube_data() -> ([Vertex; 24], [u32; 36]) {
 }
 
 impl super::Mesh {
-    pub fn create_cube(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        material: usize,
-    ) -> anyhow::Result<Self> {
+    pub fn create_cube(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Result<Self> {
         let (vertices, indices) = create_cube_data();
 
         let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -80,7 +76,6 @@ impl super::Mesh {
             vertex_buffer,
             index_buffer,
             index_count: indices.len(),
-            material,
         })
     }
 }

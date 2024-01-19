@@ -2,8 +2,10 @@ use crate::utils::load_texture;
 
 use super::{geometry::Material, Mesh};
 
+type MaterialIndex = usize;
+
 pub struct Model {
-    pub meshes: Vec<Mesh>,
+    pub meshes: Vec<(Mesh, MaterialIndex)>,
     pub materials: Vec<Material>,
 }
 
@@ -20,7 +22,7 @@ impl Model {
             texture,
         }];
 
-        let meshes = vec![Mesh::create_cube(device, queue, 0)?];
+        let meshes = vec![(Mesh::create_cube(device, queue)?, 0)];
 
         Ok(Self { meshes, materials })
     }
