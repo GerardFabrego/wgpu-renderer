@@ -9,7 +9,7 @@ mod window;
 
 use camera::{Camera, CameraController, CameraDescriptor};
 use cgmath::Deg;
-use components::{Position, Scale, Transform};
+use components::{Model, Position, Scale, Transform};
 use entity::Entity;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};
@@ -28,18 +28,14 @@ pub async fn run() {
         surface,
     }: GraphicsContext = GraphicsContext::new(&window).await;
 
-    // let object = Entity::builder()
-    //     .mesh(
-    //         Mesh::create_cube(&device, &queue, "textures/test.png")
-    //             .await
-    //             .expect("Error when creating cube"),
-    //     )
-    //     .transform(Transform {
-    //         position: Position(1.1, 0.0, -1.9),
-    //         scale: Scale(1.0, 1.0, 1.0),
-    //         ..Default::default()
-    //     })
-    //     .build();
+    let object = Entity::builder()
+        .model(Model::cube(&device, &queue, "textures/test.png").expect("Error when creating cube"))
+        .transform(Transform {
+            position: Position(1.1, 0.0, -1.9),
+            scale: Scale(1.0, 1.0, 1.0),
+            ..Default::default()
+        })
+        .build();
 
     // let object2 = Entity::builder()
     //     .mesh(
@@ -89,7 +85,7 @@ pub async fn run() {
         })
         .build();
 
-    let entities = &vec![cube];
+    let entities = &vec![cube, object];
 
     let mut camera = Camera::new(
         (0.0, 2.0, 4.0),
