@@ -9,7 +9,7 @@ mod window;
 
 use camera::{Camera, CameraController, CameraDescriptor};
 use cgmath::Deg;
-use components::{Mesh, Position, Scale, Transform};
+use components::{Position, Scale, Transform};
 use entity::Entity;
 use graphics::GraphicsContext;
 use pass::{Pass, PhongPass};

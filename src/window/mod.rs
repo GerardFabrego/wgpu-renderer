@@ -1,6 +1,8 @@
 mod commands;
 mod events;
 
+use std::sync::Arc;
+
 use winit::{
     event::{DeviceEvent, Event as WinitEvent, KeyEvent, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -15,7 +17,7 @@ pub use self::{
 
 pub struct Window {
     pub event_loop: EventLoop<()>,
-    pub window: window::Window,
+    pub window: Arc<window::Window>,
 }
 
 impl Window {
@@ -27,7 +29,10 @@ impl Window {
             .with_title("WGPU Renderer")
             .build(&event_loop)
             .expect("There was an error when building the window");
-        Self { event_loop, window }
+        Self {
+            event_loop,
+            window: Arc::new(window),
+        }
     }
 
     pub fn inner_size(&self) -> (u32, u32) {

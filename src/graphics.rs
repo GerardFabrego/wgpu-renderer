@@ -1,14 +1,14 @@
 use crate::window::Window;
 
-pub struct GraphicsContext {
-    pub surface: wgpu::Surface,
+pub struct GraphicsContext<'a> {
+    pub surface: wgpu::Surface<'a>,
     pub config: wgpu::SurfaceConfiguration,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
 }
 
-impl GraphicsContext {
-    pub async fn new(window: &Window) -> GraphicsContext {
+impl<'a> GraphicsContext<'a> {
+    pub async fn new(window: &Window) -> GraphicsContext<'a> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::PRIMARY,
             dx12_shader_compiler: Default::default(),
@@ -16,7 +16,7 @@ impl GraphicsContext {
             gles_minor_version: Default::default(),
         });
 
-        let surface = unsafe { instance.create_surface(&window.window) }.unwrap();
+        let surface = instance.create_surface(window.window.clone()).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -31,8 +31,8 @@ impl GraphicsContext {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::default(),
                 },
                 None,
             )
@@ -58,6 +58,7 @@ impl GraphicsContext {
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: surface_capabilities.alpha_modes[0],
             view_formats: vec![],
+            desired_maximum_frame_latency: 2,
         };
 
         surface.configure(&device, &config);
