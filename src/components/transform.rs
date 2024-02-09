@@ -13,6 +13,9 @@ impl From<&Position> for cgmath::Vector3<f32> {
         cgmath::Vector3::new(x, y, z)
     }
 }
+
+#[derive(Clone)]
+
 pub struct Scale(pub f32, pub f32, pub f32);
 
 impl Default for Scale {
@@ -44,7 +47,7 @@ impl From<&Rotation> for cgmath::Quaternion<f32> {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Transform {
     pub position: Position,
     pub scale: Scale,

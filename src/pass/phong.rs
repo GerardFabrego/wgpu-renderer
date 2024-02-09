@@ -3,7 +3,7 @@ use std::{collections::HashMap, mem::size_of};
 use crate::{
     camera::Camera,
     components::{TransformRaw, Vertex},
-    entity::Entity,
+    entity::BakedEntity,
     texture::Texture,
 };
 
@@ -178,7 +178,7 @@ impl super::Pass for PhongPass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entities: &Vec<Entity>,
+        entities: &Vec<BakedEntity>,
         camera: &Camera,
     ) {
         queue.write_buffer(
@@ -233,7 +233,7 @@ impl super::Pass for PhongPass {
         }
 
         let mut index = 0;
-        for Entity { model, transform } in entities {
+        for BakedEntity { model, transform } in entities {
             for (_, material_index) in &model.meshes {
                 let local_buffer = &self.local_uniforms_pool.buffers[index];
 

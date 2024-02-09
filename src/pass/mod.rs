@@ -1,4 +1,4 @@
-use crate::{camera::Camera, entity::Entity};
+use crate::{camera::Camera, entity::BakedEntity};
 
 mod phong;
 mod uniform_pool;
@@ -27,7 +27,7 @@ pub trait Pass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entities: &Vec<Entity>,
+        entities: &Vec<BakedEntity>,
         camera: &Camera,
     );
 }

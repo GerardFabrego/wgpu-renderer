@@ -1,31 +1,35 @@
-use crate::components::{Mesh, Model, Transform};
+use crate::components::{Model, ModelDescriptor, Transform};
 
-pub struct Entity {
+pub struct BakedEntity {
     pub model: Model,
     pub transform: Transform,
 }
+pub struct Entity<'a> {
+    pub model_descriptor: ModelDescriptor<'a>,
+    pub transform: Transform,
+}
 
-impl Entity {
-    pub fn builder() -> EntityBuilder {
+impl Entity<'_> {
+    pub fn builder() -> EntityBuilder<'static> {
         EntityBuilder::new()
     }
 }
 
-pub struct EntityBuilder {
-    model: Option<Model>,
+pub struct EntityBuilder<'a> {
+    model_descriptor: Option<ModelDescriptor<'a>>,
     transform: Transform,
 }
 
-impl EntityBuilder {
+impl<'a> EntityBuilder<'a> {
     pub fn new() -> Self {
         Self {
-            model: None,
+            model_descriptor: None,
             transform: Transform::default(),
         }
     }
 
-    pub fn model(mut self, model: Model) -> Self {
-        self.model = Some(model);
+    pub fn model(mut self, model_descriptor: ModelDescriptor<'a>) -> Self {
+        self.model_descriptor = Some(model_descriptor);
         self
     }
 
@@ -34,9 +38,11 @@ impl EntityBuilder {
         self
     }
 
-    pub fn build(self) -> Entity {
+    pub fn build(self) -> Entity<'a> {
         Entity {
-            model: self.model.expect("Missing model when creating entity"),
+            model_descriptor: self
+                .model_descriptor
+                .expect("Missing model when creating entity"),
             transform: self.transform,
         }
     }

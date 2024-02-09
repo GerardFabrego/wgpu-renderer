@@ -4,6 +4,11 @@ use super::{geometry::Material, Mesh};
 
 type MaterialIndex = usize;
 
+pub enum ModelDescriptor<'a> {
+    Cube(&'a str),
+    File(&'a str),
+}
+
 pub struct Model {
     pub meshes: Vec<(Mesh, MaterialIndex)>,
     pub materials: Vec<Material>,

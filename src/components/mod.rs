@@ -4,6 +4,6 @@ mod transform;
 
 pub use self::{
     geometry::{Material, Mesh, Vertex},
-    model::Model,
+    model::{Model, ModelDescriptor},
     transform::{Position, Rotation, Scale, Transform, TransformRaw},
 };
