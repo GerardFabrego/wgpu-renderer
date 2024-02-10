@@ -178,7 +178,7 @@ impl super::Pass for PhongPass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entities: &Vec<BakedEntity>,
+        entities: &[BakedEntity],
         camera: &Camera,
     ) {
         queue.write_buffer(

@@ -27,7 +27,7 @@ pub trait Pass {
         surface: &wgpu::Surface,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        entities: &Vec<BakedEntity>,
+        entities: &[BakedEntity],
         camera: &Camera,
     );
 }
